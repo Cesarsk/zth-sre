@@ -1,0 +1,20 @@
+schema_version: 1
+id: vertical-horizontal
+title: Vertical or Horizontal Scaling
+difficulty: beginner
+description: >-
+  The API is constrained by CPU. Compare adding resource to one instance with
+  activating a second instance, then verify the user-visible result.
+learning_objectives:
+  - Compare vertical and horizontal capacity changes.
+  - Choose a scaling intervention using evidence.
+environment: {runtime: docker, topology: api-dependency}
+traffic: {profile: ramp, from_rps: 10, to_rps: 60, ramp_duration: 60s, hold_duration: 5m}
+faults:
+  - {target: api, type: cpu_work, config: {work_units: 1000000}}
+objectives: {availability: 0.999, p95_latency_ms: 500}
+grading: {kind: service_recovery, window: 60s, minimum_requests: 100, minimum_offered_rps: 40}
+hints: ["Compare CPU, latency and errors first.", "Vertical and horizontal changes affect capacity differently.", "Verify under continuing traffic."]
+diagram:
+  nodes: [{id: traffic, label: Traffic / k6, role: traffic_generator}, {id: lb, label: Load balancer, role: load_balancer}, {id: api1, label: 'API #1', role: service}, {id: api2, label: 'API #2', role: service}, {id: dependency, label: Dependency, role: dependency}]
+  edges: [{from: traffic, to: lb}, {from: lb, to: api1}, {from: lb, to: api2}, {from: api1, to: dependency}, {from: api2, to: dependency}]

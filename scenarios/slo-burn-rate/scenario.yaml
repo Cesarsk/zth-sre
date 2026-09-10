@@ -1,0 +1,37 @@
+schema_version: 1
+id: slo-burn-rate
+title: Availability SLO Burn Rate
+difficulty: intermediate
+description: >-
+  Controlled API failures consume a 99.9 percent availability error budget.
+  Define a valid-request denominator and alert on rapid burn without paging on recovery.
+learning_objectives:
+  - Calculate availability error-budget burn from valid API requests.
+  - Validate a rapid-burn alert through impaired and recovered traffic.
+environment:
+  runtime: docker
+  topology: api-dependency
+traffic:
+  profile: constant
+  rps: 40
+  duration: 15m
+faults:
+  - target: api
+    type: error_rate
+    config:
+      probability: 0.02
+objectives:
+  availability: 0.999
+  p95_latency_ms: 500
+grading:
+  kind: burn_rate_alert
+  window: 60s
+  minimum_requests: 1000
+  minimum_offered_rps: 35
+hints:
+  - Exclude health probes from both the SLI numerator and denominator.
+  - A 99.9 percent availability SLO has a 0.1 percent error budget.
+  - Verify that a rapid-burn alert clears after traffic and errors recover.
+diagram:
+  nodes: [{id: traffic, label: Traffic / k6, role: traffic_generator}, {id: api, label: API service, role: service}, {id: dependency, label: Dependency, role: dependency}, {id: slo, label: Burn-rate SLO, role: objective}]
+  edges: [{from: traffic, to: api}, {from: api, to: dependency}, {from: slo, to: api, label: evaluates}]

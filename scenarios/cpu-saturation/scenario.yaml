@@ -1,0 +1,39 @@
+schema_version: 1
+id: cpu-saturation
+title: API CPU Saturation
+difficulty: beginner
+description: >-
+  Sustained demand exhausts the API's constrained CPU capacity. Investigate the
+  evidence, increase capacity, and verify user-visible recovery under load.
+learning_objectives:
+  - Identify CPU saturation and capacity headroom from service evidence.
+  - Verify a mitigation with availability and latency while traffic is maintained.
+environment:
+  runtime: docker
+  topology: api-dependency
+traffic:
+  profile: ramp
+  from_rps: 10
+  to_rps: 60
+  ramp_duration: 60s
+  hold_duration: 15m
+faults:
+  - target: api
+    type: cpu_work
+    config:
+      work_units: 1000000
+objectives:
+  availability: 0.999
+  p95_latency_ms: 500
+grading:
+  kind: service_recovery
+  window: 60s
+  minimum_requests: 1000
+  minimum_offered_rps: 55
+hints:
+  - Compare offered traffic, latency, and errors before changing capacity.
+  - Compare API CPU usage with its allocated CPU capacity.
+  - Increase API capacity, then observe a complete recovery window.
+diagram:
+  nodes: [{id: traffic, label: Traffic / k6, role: traffic_generator}, {id: lb, label: API load balancer, role: load_balancer}, {id: api, label: API pool, role: service}, {id: dependency, label: Dependency, role: dependency}, {id: prom, label: Prometheus, role: metrics}]
+  edges: [{from: traffic, to: lb}, {from: lb, to: api}, {from: api, to: dependency}, {from: prom, to: api, label: scrapes}]

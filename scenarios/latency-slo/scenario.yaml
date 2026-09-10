@@ -1,0 +1,18 @@
+schema_version: 1
+id: latency-slo
+title: Latency SLO vs Availability SLO
+difficulty: intermediate
+description: >-
+  Requests succeed but violate a latency objective. Build evidence for a
+  latency SLI instead of relying only on HTTP status.
+learning_objectives: ["Define a latency SLI", "Compare latency and availability objectives", "Alert on user-visible latency"]
+environment: {runtime: docker, topology: api-dependency}
+traffic: {profile: constant, rps: 20, duration: 5m}
+faults:
+  - {target: dependency, type: dependency_latency, config: {latency_ms: 300}}
+objectives: {availability: 0.999, p95_latency_ms: 250}
+grading: {kind: service_recovery, window: 60s, minimum_requests: 100, minimum_offered_rps: 15}
+hints: ["A 200 response can still be too slow.", "Use histogram quantiles for p95.", "Keep the availability and latency SLIs separate."]
+diagram:
+  nodes: [{id: traffic, label: Traffic / k6, role: traffic_generator}, {id: api, label: API service, role: service}, {id: dependency, label: Dependency, role: dependency}, {id: slo, label: Latency SLO, role: objective}]
+  edges: [{from: traffic, to: api}, {from: api, to: dependency}, {from: slo, to: api, label: measures}]

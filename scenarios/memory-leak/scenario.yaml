@@ -1,0 +1,18 @@
+schema_version: 1
+id: memory-leak
+title: Memory Leak and OOM Recovery
+difficulty: intermediate
+description: >-
+  API memory grows over time while request traffic remains steady. Find the
+  trend, distinguish it from a traffic spike, and restore stable operation.
+learning_objectives: ["Recognize memory growth", "Correlate memory with restarts and latency", "Verify stable recovery"]
+environment: {runtime: docker, topology: api-dependency}
+traffic: {profile: constant, rps: 15, duration: 5m}
+faults:
+  - {target: api, type: memory_leak, config: {memory_mb: 2}}
+objectives: {availability: 0.99, p95_latency_ms: 750}
+grading: {kind: service_recovery, window: 60s, minimum_requests: 80, minimum_offered_rps: 10}
+hints: ["Graph memory over time, not just one sample.", "Compare memory with request rate and restarts.", "A restart may restore service but does not prove the leak is fixed."]
+diagram:
+  nodes: [{id: traffic, label: Traffic / k6, role: traffic_generator}, {id: api, label: API service, role: service}, {id: memory, label: Memory / heap, role: resource}, {id: dependency, label: Dependency, role: dependency}]
+  edges: [{from: traffic, to: api}, {from: api, to: memory}, {from: api, to: dependency}]

@@ -1,0 +1,16 @@
+# Optional host-specific ingress; portable make up does not use this file.
+services:
+  server:
+    environment:
+      ALLOWED_ORIGINS: http://localhost:8080,http://127.0.0.1:8080,https://labs.mini.lucacesarano.com
+    networks:
+      private-ingress:
+        aliases: [sre-lab-server]
+  toolbox:
+    environment:
+      ALLOWED_ORIGINS: http://localhost:8080,http://127.0.0.1:8080,https://labs.mini.lucacesarano.com
+
+networks:
+  private-ingress:
+    external: true
+    name: private-ingress

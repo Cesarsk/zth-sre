@@ -1,0 +1,157 @@
+name: sre-lab
+
+x-sandbox: &sandbox
+  init: true
+  restart: unless-stopped
+  read_only: true
+  cap_drop: [ALL]
+  security_opt: [no-new-privileges:true]
+  pids_limit: 128
+  mem_limit: 128m
+  cpus: 0.5
+  tmpfs: ["/tmp:size=32m,mode=1777"]
+  logging:
+    driver: json-file
+    options: {max-size: 5m, max-file: "2"}
+
+x-health: &health
+  test: [CMD, wget, -q, -O, /dev/null, http://localhost:8080/healthz]
+  interval: 5s
+  timeout: 3s
+  retries: 12
+  start_period: 5s
+
+services:
+  server:
+    <<: *sandbox
+    build: {context: ., target: server}
+    ports: ["127.0.0.1:8080:8080"]
+    environment:
+      ALLOWED_ORIGINS: http://localhost:8080,http://127.0.0.1:8080
+      PROGRESS_PATH: /data/progress.json
+      HISTORY_PATH: /data/runs.json
+      SCENARIO_ROOT: /app
+      API_URL: http://api-lb:8080
+      DEPENDENCY_URL: http://dependency:8080
+      TRAFFIC_URL: http://traffic:8080
+      LB_URL: http://api-lb:8080
+      API1_URL: http://api-1:8080
+      API2_URL: http://api-2:8080
+    networks: [edge, control, observation, lab]
+    volumes:
+      - progress:/data
+    healthcheck: *health
+    depends_on:
+      toolbox: {condition: service_healthy}
+      api-lb: {condition: service_healthy}
+      dependency: {condition: service_healthy}
+      prometheus: {condition: service_healthy}
+      traffic: {condition: service_healthy}
+
+  toolbox:
+    <<: *sandbox
+    build: {context: ., dockerfile: toolbox/Dockerfile}
+    environment:
+      ALLOWED_ORIGINS: http://localhost:8080,http://127.0.0.1:8080
+    networks: [control, lab]
+    sysctls:
+      net.ipv4.ping_group_range: "1000 1000"
+    tmpfs: ["/tmp:size=32m,mode=1777", "/home/learner:size=32m,uid=1000,gid=1000,mode=700"]
+    healthcheck: *health
+
+  api-1:
+    <<: *sandbox
+    build: {context: ., target: demo}
+    environment: {ROLE: api, DEPENDENCY_URL: "http://dependency:8080", CPU_LIMIT_CORES: "0.5"}
+    networks: [lab]
+    healthcheck: *health
+    depends_on:
+      dependency: {condition: service_healthy}
+
+  api-2:
+    <<: *sandbox
+    build: {context: ., target: demo}
+    environment: {ROLE: api, DEPENDENCY_URL: "http://dependency:8080", CPU_LIMIT_CORES: "0.5"}
+    networks: [lab]
+    healthcheck: *health
+    depends_on:
+      dependency: {condition: service_healthy}
+
+  api-lb:
+    <<: *sandbox
+    build: {context: ., target: api-lb}
+    environment:
+      BACKEND_1_URL: http://api-1:8080
+      BACKEND_2_URL: http://api-2:8080
+    networks: [lab]
+    healthcheck: *health
+    depends_on:
+      api-1: {condition: service_healthy}
+      api-2: {condition: service_healthy}
+
+  dependency:
+    <<: *sandbox
+    build: {context: ., target: demo}
+    environment: {ROLE: dependency}
+    networks: [lab]
+    healthcheck: *health
+
+  prometheus:
+    <<: *sandbox
+    image: prom/prometheus:v3.5.0
+    user: "65534:65534"
+    mem_limit: 256m
+    networks: [edge, observation, lab]
+    ports: ["127.0.0.1:9090:9090"]
+    volumes:
+      - ./observability/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - metrics:/prometheus
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.path=/prometheus
+      - --storage.tsdb.retention.time=2h
+      - --storage.tsdb.retention.size=128MB
+      - --web.external-url=/prometheus/
+      - --web.route-prefix=/
+      - --query.timeout=10s
+      - --query.max-concurrency=4
+      - --query.max-samples=1000000
+      - --web.enable-remote-write-receiver
+    healthcheck:
+      <<: *health
+      test: [CMD, wget, -q, -O, /dev/null, http://localhost:9090/-/ready]
+
+  traffic:
+    <<: *sandbox
+    build: {context: ., dockerfile: traffic/Dockerfile}
+    mem_limit: 256m
+    cpus: 1
+    networks: [control, lab]
+    healthcheck:
+      test: [CMD, wget, -q, -O, /dev/null, http://localhost:8080/healthz]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+      start_period: 5s
+
+  test:
+    profiles: [test]
+    build: {context: ., target: test}
+    network_mode: none
+
+  browser-test:
+    profiles: [test]
+    build: {context: ., target: browser-test}
+    network_mode: service:server
+    environment: {BASE_URL: "http://localhost:8080"}
+    shm_size: 256m
+
+networks:
+  edge: {}
+  control: {internal: true}
+  observation: {internal: true}
+  lab: {internal: true}
+
+volumes:
+  metrics:
+  progress:

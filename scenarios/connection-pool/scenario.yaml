@@ -1,0 +1,18 @@
+schema_version: 1
+id: connection-pool
+title: Connection Pool Exhaustion
+difficulty: intermediate
+description: >-
+  Requests wait behind a small connection pool while CPU remains moderate.
+  Identify concurrency saturation and restore reliable service.
+learning_objectives: ["Recognize concurrency saturation", "Use active requests and latency together", "Choose a safe pool-size intervention"]
+environment: {runtime: docker, topology: api-dependency}
+traffic: {profile: constant, rps: 35, duration: 5m}
+faults:
+  - {target: api, type: connection_exhaustion, config: {max_concurrency: 4}}
+objectives: {availability: 0.99, p95_latency_ms: 750}
+grading: {kind: service_recovery, window: 60s, minimum_requests: 100, minimum_offered_rps: 25}
+hints: ["CPU is not the only saturation signal.", "Inspect active requests and latency.", "Increase concurrency carefully, then observe stability."]
+diagram:
+  nodes: [{id: traffic, label: Traffic / k6, role: traffic_generator}, {id: api, label: API service, role: service}, {id: pool, label: Connection pool, role: resource}, {id: dependency, label: Dependency, role: dependency}]
+  edges: [{from: traffic, to: api}, {from: api, to: pool}, {from: pool, to: dependency}]

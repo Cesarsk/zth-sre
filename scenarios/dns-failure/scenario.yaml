@@ -1,0 +1,18 @@
+schema_version: 1
+id: dns-failure
+title: DNS Failure
+difficulty: intermediate
+description: >-
+  The API cannot reliably resolve its dependency. Investigate name resolution
+  separately from dependency process health.
+learning_objectives: ["Use DNS evidence", "Separate name resolution from HTTP health", "Restore dependency reachability"]
+environment: {runtime: docker, topology: api-dependency}
+traffic: {profile: constant, rps: 15, duration: 5m}
+faults:
+  - {target: dependency, type: dns_failure, config: {failure_every: 1}}
+objectives: {availability: 0.99, p95_latency_ms: 750}
+grading: {kind: service_recovery, window: 60s, minimum_requests: 80, minimum_offered_rps: 10}
+hints: ["Check the name and address from the toolbox.", "A green dependency process does not prove DNS works.", "Verify after restoring resolution."]
+diagram:
+  nodes: [{id: traffic, label: Traffic / k6, role: traffic_generator}, {id: api, label: API service, role: service}, {id: dns, label: DNS, role: network}, {id: dependency, label: Dependency, role: dependency}]
+  edges: [{from: traffic, to: api}, {from: api, to: dns}, {from: dns, to: dependency}]

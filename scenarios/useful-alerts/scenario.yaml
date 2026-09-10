@@ -1,0 +1,40 @@
+schema_version: 1
+id: useful-alerts
+title: Useful Alerts for User Impact
+difficulty: intermediate
+description: >-
+  CPU work creates harmless variation before higher demand causes user-visible
+  latency and failures. Replace noisy alerting with actionable behavior.
+learning_objectives:
+  - Distinguish resource noise from user-visible service impairment.
+  - Validate that an alert fires during impairment and clears after recovery.
+environment:
+  runtime: docker
+  topology: api-dependency
+traffic:
+  profile: spike
+  baseline_rps: 10
+  peak_rps: 65
+  before_duration: 5m
+  spike_duration: 5m
+  after_duration: 5m
+faults:
+  - target: api
+    type: cpu_work
+    config:
+      work_units: 250000
+objectives:
+  availability: 0.99
+  p95_latency_ms: 750
+grading:
+  kind: alert_behavior
+  window: 60s
+  minimum_requests: 500
+  minimum_offered_rps: 10
+hints:
+  - Start with user-visible latency and error signals, not CPU alone.
+  - Test the alert during healthy, noisy, impaired, and recovered conditions.
+  - An alert that always fires or never fires is not useful.
+diagram:
+  nodes: [{id: traffic, label: Traffic / k6, role: traffic_generator}, {id: api, label: API service, role: service}, {id: dependency, label: Dependency, role: dependency}, {id: prom, label: Prometheus, role: metrics}]
+  edges: [{from: traffic, to: api}, {from: api, to: dependency}, {from: prom, to: api, label: measures}]

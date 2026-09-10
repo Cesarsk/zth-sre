@@ -1,0 +1,18 @@
+schema_version: 1
+id: dependency-bottleneck
+title: Dependency Bottleneck
+difficulty: intermediate
+description: >-
+  API capacity appears available, but a slow dependency limits end-to-end
+  reliability. Find the constrained layer before scaling the caller.
+learning_objectives: ["Locate a dependency bottleneck", "Distinguish caller capacity from dependency capacity", "Validate a dependency-side intervention"]
+environment: {runtime: docker, topology: api-dependency}
+traffic: {profile: constant, rps: 20, duration: 5m}
+faults:
+  - {target: dependency, type: dependency_latency, config: {latency_ms: 300}}
+objectives: {availability: 0.99, p95_latency_ms: 500}
+grading: {kind: service_recovery, window: 60s, minimum_requests: 100, minimum_offered_rps: 15}
+hints: ["Compare API and dependency latency.", "More API instances do not remove dependency service time.", "Check recovery at the dependency boundary."]
+diagram:
+  nodes: [{id: traffic, label: Traffic / k6, role: traffic_generator}, {id: api, label: API service, role: service}, {id: dependency, label: Slow dependency, role: dependency}, {id: queue, label: Dependency queue, role: saturation}]
+  edges: [{from: traffic, to: api}, {from: api, to: dependency}, {from: dependency, to: queue}]

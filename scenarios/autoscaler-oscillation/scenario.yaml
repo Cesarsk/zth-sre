@@ -1,0 +1,18 @@
+schema_version: 1
+id: autoscaler-oscillation
+title: Autoscaler Oscillation
+difficulty: advanced
+description: >-
+  A fast scaling policy reacts to a noisy signal and repeatedly changes API
+  capacity. Diagnose the feedback loop and stabilize it.
+learning_objectives: ["Recognize unstable feedback", "Choose a meaningful scaling signal", "Use cooldown and hysteresis"]
+environment: {runtime: docker, topology: api-dependency}
+traffic: {profile: spike, baseline_rps: 10, peak_rps: 45, before_duration: 60s, spike_duration: 3m, after_duration: 60s}
+faults:
+  - {target: api, type: autoscaler_oscillation, config: {work_units: 500000}}
+objectives: {availability: 0.99, p95_latency_ms: 750}
+grading: {kind: service_recovery, window: 60s, minimum_requests: 100, minimum_offered_rps: 10}
+hints: ["Plot capacity and latency together.", "Look for repeated scale-up and scale-down decisions.", "Add stabilization before optimizing reaction speed."]
+diagram:
+  nodes: [{id: traffic, label: Changing traffic, role: traffic_generator}, {id: autoscaler, label: Scaling policy, role: controller}, {id: api, label: API capacity, role: service}, {id: dependency, label: Dependency, role: dependency}]
+  edges: [{from: traffic, to: autoscaler}, {from: autoscaler, to: api}, {from: api, to: dependency}, {from: api, to: autoscaler, label: signal}]

@@ -1,0 +1,18 @@
+schema_version: 1
+id: retry-storm
+title: Retry Storm and Cascading Failure
+difficulty: advanced
+description: >-
+  Dependency failures trigger retries from the API and amplify load. Stabilize
+  the system without stopping the required traffic.
+learning_objectives: ["Identify amplified traffic", "Understand retry feedback", "Use bounded retries and recovery"]
+environment: {runtime: docker, topology: api-dependency}
+traffic: {profile: constant, rps: 20, duration: 5m}
+faults:
+  - {target: api, type: retry_storm, config: {retries: 3}}
+objectives: {availability: 0.99, p95_latency_ms: 1000}
+grading: {kind: service_recovery, window: 60s, minimum_requests: 100, minimum_offered_rps: 15}
+hints: ["Compare offered requests with dependency calls.", "Retries can make a dependency outage worse.", "Bound or remove retries before increasing capacity."]
+diagram:
+  nodes: [{id: traffic, label: Traffic / k6, role: traffic_generator}, {id: api, label: API + retries, role: service}, {id: dependency, label: Failing dependency, role: dependency}, {id: loop, label: Retry amplification, role: feedback}]
+  edges: [{from: traffic, to: api}, {from: api, to: dependency}, {from: dependency, to: loop}, {from: loop, to: api}]
