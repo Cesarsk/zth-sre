@@ -27,7 +27,7 @@ test('live health, real PTY commands, resize, disconnect and fresh reconnect', a
   await expect(page.getByRole('heading', { name: 'SRE Lab', exact: true })).toBeVisible();
   await expect(page.getByRole('status').filter({ hasText: 'System healthy' })).toBeVisible();
   await expect(page.getByText('Exercises / Docker runtime')).toBeVisible();
-  await expect(page.getByText('Real containers, generated traffic', { exact: false })).toBeVisible();
+  await expect(page.getByText('Guided self-check: investigate with real tools', { exact: false })).toBeVisible();
   await expect(page.getByRole('link', { name: 'Open Prometheus' })).toHaveAttribute('href', '/prometheus/');
   await expect(page.getByTestId('terminal-status')).toHaveText('Disconnected');
 

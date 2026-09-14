@@ -53,7 +53,14 @@ Failures retain traces/screenshots in `test-results/`; the HTML report goes to
 
 ## Validation Evidence
 
-Container validation on 2026-09-10: TypeScript/Vite production build passed;
-all 11 browser tests passed against the rebuilt stack, including catalog
-start/reset, real PTY, Prometheus and persistence checks. The HTTPS catalog/live
-subset also passed at `labs.mini.lucacesarano.com`.
+Container validation on 2026-09-14: TypeScript/Vite production build passed;
+all 15 browser tests passed against the rebuilt stack, including catalog
+start/reset, real PTY, Prometheus, persistence, mobile discovery, keyboard
+explanations, command copying, per-exercise notes, and self-check labeling.
+The three learner-experience tests also passed over HTTPS at
+`labs.mini.lucacesarano.com`.
+
+Exercise notes are stored per exercise in the learner's browser. The original
+walkthrough notes and checklist continue to use the lab server's progress API.
+Catalog completion badges use shared lab run history, and file-forensics
+completion is explicitly labeled as a learner-confirmed self-check.
