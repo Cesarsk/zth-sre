@@ -21,6 +21,10 @@ networking is supported/enabled by your Docker runtime. That exact browser origi
 must be allowed by the Go server; do not weaken origin validation for tests.
 All tested URLs are relative to `BASE_URL`.
 
+For the private deployment, run `make smoke-private` after every redeploy. It
+recreates the server and Toolbox with the private origin overlay before running
+the suite, including a test that opens `/terminal` from an exercise over HTTPS.
+
 For frontend-only checks (no Go/Compose stack), build the frontend as documented
 in `frontend/README.md`, then run from the repository root:
 
