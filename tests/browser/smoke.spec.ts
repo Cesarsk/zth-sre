@@ -94,6 +94,20 @@ test('Prometheus has scraped the real API and dependency', async ({ request }) =
   }, { timeout: 45000 }).toEqual(expect.arrayContaining(['api-1:8080', 'api-2:8080', 'dependency:8080']));
 });
 
+test('Toolbox is available immediately from an exercise and survives run startup', async ({ page }) => {
+  await page.goto('/#/exercises/cpu-saturation');
+  await expect(page.getByRole('button', { name: 'Connect terminal' })).toBeVisible();
+  const socketPromise = page.waitForEvent('websocket', socket => new URL(socket.url()).pathname === '/terminal');
+  await page.getByRole('button', { name: 'Start exercise' }).click();
+  await page.getByRole('button', { name: 'Connect terminal' }).click();
+  await socketPromise;
+  await expect(page.getByTestId('terminal-status')).toHaveText('Connected');
+  await page.getByRole('button', { name: 'Disconnect', exact: true }).click();
+  await expect(page.getByTestId('terminal-status')).toHaveText('Disconnected');
+  await expect(page.getByRole('button', { name: 'Reset exercise' })).toBeVisible({ timeout: 30000 });
+  await page.getByRole('button', { name: 'Reset exercise' }).click();
+});
+
 test('the Prometheus UI renders through the same-origin proxy', async ({ page }) => {
   const errors: string[] = [];
   page.on('pageerror', error => errors.push(error.message));

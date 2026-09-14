@@ -54,8 +54,8 @@ Failures retain traces/screenshots in `test-results/`; the HTML report goes to
 ## Validation Evidence
 
 Container validation on 2026-09-14: TypeScript/Vite production build passed;
-all 15 browser tests passed against the rebuilt stack, including catalog
-start/reset, real PTY, Prometheus, persistence, mobile discovery, keyboard
+all 16 browser tests passed against the rebuilt stack, including catalog
+start/reset, real PTY, exercise Toolbox startup, Prometheus, persistence, mobile discovery, keyboard
 explanations, command copying, per-exercise notes, and self-check labeling.
 The three learner-experience tests also passed over HTTPS at
 `labs.mini.lucacesarano.com`.

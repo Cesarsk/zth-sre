@@ -304,7 +304,7 @@ export function App() {
           {exerciseMode && history.filter(item => item.scenario === exercise.id).length > 0 && <section className="run-history" aria-labelledby="history-heading"><h3 id="history-heading">Recent checks</h3><p className="phase-note">Shared lab history</p><ul>{history.filter(item => item.scenario === exercise.id).slice(-5).reverse().map(item => <li key={`${item.runID}-${item.checkedAt}`}><span>{item.passed ? (selfCheck ? 'Self-check recorded' : 'Passed') : 'Needs evidence'}</span><time dateTime={item.checkedAt}>{new Date(item.checkedAt).toLocaleString()}</time>{!selfCheck && item.p95LatencyMS !== undefined && <small>{Math.round(item.p95LatencyMS)} ms p95</small>}</li>)}</ul></section>}
       </aside>}
        <div className="lab-workspace">
-        {(walkthrough || activeRun) && <LabTerminal />}
+        {exercise && <LabTerminal />}
         {exercise && <><nav className="workspace-tools" aria-label="Investigation tools">{(walkthrough ? ['metrics', 'topology'] : ['metrics', 'topology', 'notes']).map(name => <button key={name} className="secondary-button" aria-pressed={tool === name} onClick={() => setTool(name)}>{name[0].toUpperCase() + name.slice(1)}</button>)}</nav>{!walkthrough && <section hidden={tool !== 'notes'}><InvestigationNotes key={exercise.id} id={exercise.id} /></section>}<section hidden={tool !== 'topology'}><ResourceDiagram id={exercise.id} active={activeRun} phase={run.phase} diagram={scenarioCatalog.find(item => item.id === exercise.id)?.diagram} /></section></>}
         <div hidden={!!exercise && tool !== 'metrics'}>
        <section className="overview" aria-labelledby="system-heading">

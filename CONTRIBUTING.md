@@ -9,7 +9,7 @@ memorization. Keep the first three exercises excellent before growing a catalog.
 1. Describe the operational problem and acceptance evidence in an issue or PR.
 2. Prefer small changes with explicit behavior over plugin frameworks or generic layers.
 3. Add tests with the implementation; never interpret missing telemetry as success.
-4. Run `make test` and `make smoke`; both execute tooling inside containers.
+4. Run `make test` and `make smoke`; both execute tooling inside containers. `make smoke` must pass after every redeploy and includes a test that starts an exercise and connects the Toolbox terminal during run startup.
 5. Update architecture and contributor docs when contracts or deployment change.
 
 Only Docker/Compose and Make are required on the host. Build the UI with

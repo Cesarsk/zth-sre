@@ -46,7 +46,7 @@ test('incident exercise briefs can start a deterministic lab', async ({ page }) 
   await expect(page.getByText('Executable exercise.', { exact: false })).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Exercise runbook' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Start exercise' })).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Connect terminal' })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Connect terminal' })).toBeVisible();
   await expect(page.getByRole('checkbox')).toHaveCount(0);
   await expect(page.getByText('observed outcome', { exact: false }).first()).toBeVisible();
   await page.getByRole('button', { name: 'Start exercise' }).click();

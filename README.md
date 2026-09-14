@@ -90,7 +90,7 @@ run or when a previous exercise was left active.
 | `make bootstrap` | Build application/toolbox images and pull Prometheus |
 | `make up` | Build and start the stack, waiting for container health checks |
 | `make test` | Containerized Go race tests, vet, and Prometheus config validation |
-| `make smoke` | Start the stack and run Chromium tests, including a real shell |
+| `make smoke` | Start the stack and run Chromium tests, including exercise Toolbox connectivity and a real shell |
 | `make down` | Stop this stack; retain Prometheus history |
 | `make reset` | Remove this stack and its metrics volume; start a clean baseline |
 | `make clean` | Remove this stack and its disposable metrics volume, without restarting |
