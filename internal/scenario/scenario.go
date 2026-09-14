@@ -35,6 +35,7 @@ var (
 		"retry-storm":            true,
 		"memory-leak":            true,
 		"autoscaler-oscillation": true,
+		"file-forensics":         true,
 	}
 )
 
@@ -230,7 +231,7 @@ func (s Scenario) validate() error {
 	if s.Objectives.Availability <= 0 || s.Objectives.Availability > 1 || s.Objectives.P95LatencyMS <= 0 || s.Objectives.P95LatencyMS > 60000 {
 		return fmt.Errorf("objectives must specify availability in (0, 1] and p95_latency_ms in (0, 60000]")
 	}
-	if s.Grading.Kind != "service_recovery" && s.Grading.Kind != "alert_behavior" && s.Grading.Kind != "burn_rate_alert" {
+	if s.Grading.Kind != "service_recovery" && s.Grading.Kind != "alert_behavior" && s.Grading.Kind != "burn_rate_alert" && s.Grading.Kind != "file_forensics" {
 		return fmt.Errorf("unsupported grading kind %q", s.Grading.Kind)
 	}
 	if err := validateDuration("grading window", s.Grading.Window); err != nil || s.Grading.MinimumRequests <= 0 || s.Grading.MinimumOfferedRPS <= 0 || s.Grading.MinimumOfferedRPS > maxRate {
@@ -315,6 +316,10 @@ func (f Fault) validate() error {
 	case "autoscaler_oscillation":
 		if f.Target != "api" {
 			return fmt.Errorf("autoscaler_oscillation requires api target")
+		}
+	case "file_handle":
+		if f.Target != "api" || f.Config != (FaultConfig{}) {
+			return fmt.Errorf("file_handle requires api target and empty config")
 		}
 	default:
 		return fmt.Errorf("unsupported fault type %q", f.Type)

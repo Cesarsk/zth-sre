@@ -31,19 +31,20 @@ type runtimeConfig struct {
 }
 
 type runState struct {
-	ID              string    `json:"runID"`
-	Scenario        string    `json:"scenario"`
-	State           string    `json:"state"`
-	Phase           string    `json:"phase"`
-	StartedAt       time.Time `json:"startedAt"`
-	RevealedHints   []int     `json:"revealedHints"`
-	AlertExpression string    `json:"alertExpression,omitempty"`
-	AlertFired      bool      `json:"alertFired"`
-	AlertCleared    bool      `json:"alertCleared"`
-	AlertBaseline   bool      `json:"alertBaseline"`
-	IncidentSeen    bool      `json:"incidentSeen"`
-	RecoverySeen    bool      `json:"recoverySeen"`
-	Interventions   []string  `json:"interventions,omitempty"`
+	ID               string    `json:"runID"`
+	Scenario         string    `json:"scenario"`
+	State            string    `json:"state"`
+	Phase            string    `json:"phase"`
+	StartedAt        time.Time `json:"startedAt"`
+	RevealedHints    []int     `json:"revealedHints"`
+	AlertExpression  string    `json:"alertExpression,omitempty"`
+	AlertFired       bool      `json:"alertFired"`
+	AlertCleared     bool      `json:"alertCleared"`
+	AlertBaseline    bool      `json:"alertBaseline"`
+	IncidentSeen     bool      `json:"incidentSeen"`
+	RecoverySeen     bool      `json:"recoverySeen"`
+	Interventions    []string  `json:"interventions,omitempty"`
+	FileEvidenceSeen bool      `json:"fileEvidenceSeen"`
 }
 
 type runtimeManager struct {
@@ -312,6 +313,9 @@ func (m *runtimeManager) check(ctx context.Context) map[string]any {
 	case "autoscaler-oscillation":
 		result["passed"] = hasIntervention(m.active, "stabilize-policy") && m.active.RecoverySeen && availability >= item.Objectives.Availability && p95 <= float64(item.Objectives.P95LatencyMS) && count >= float64(item.Grading.MinimumRequests)
 		result["feedback"] = "Identify unstable capacity changes, stabilize the policy, mark recovery, and verify the declared SLO."
+	case "file-forensics":
+		result["passed"] = m.active.FileEvidenceSeen
+		result["feedback"] = "Use lsof to identify the open file, then map the file descriptor to the responsible file-reader process."
 	}
 	passed, _ := result["passed"].(bool)
 	feedback, _ := result["feedback"].(string)
@@ -319,9 +323,21 @@ func (m *runtimeManager) check(ctx context.Context) map[string]any {
 	return result
 }
 
+func (m *runtimeManager) markFileEvidence() error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	if m.active == nil || m.active.Scenario != "file-forensics" {
+		return errors.New("file forensics exercise is not active")
+	}
+	m.active.FileEvidenceSeen = true
+	return nil
+}
+
 func hasIntervention(run *runState, action string) bool {
 	for _, item := range run.Interventions {
-		if item == action { return true }
+		if item == action {
+			return true
+		}
 	}
 	return false
 }
@@ -385,7 +401,7 @@ func (m *runtimeManager) query(ctx context.Context, expression string) (float64,
 }
 
 func (m *runtimeManager) startTraffic(ctx context.Context, run *runState) error {
-	profile := map[string]string{"cpu-saturation": "cpu", "useful-alerts": "alert", "slo-burn-rate": "slo", "vertical-horizontal": "cpu", "dependency-bottleneck": "alert", "connection-pool": "alert", "latency-slo": "slo", "dns-failure": "alert", "retry-storm": "alert", "memory-leak": "alert", "autoscaler-oscillation": "cpu"}[run.Scenario]
+	profile := map[string]string{"cpu-saturation": "cpu", "useful-alerts": "alert", "slo-burn-rate": "slo", "vertical-horizontal": "cpu", "dependency-bottleneck": "alert", "connection-pool": "alert", "latency-slo": "slo", "dns-failure": "alert", "retry-storm": "alert", "memory-leak": "alert", "autoscaler-oscillation": "cpu", "file-forensics": "alert"}[run.Scenario]
 	return m.requestJSON(ctx, http.MethodPost, m.config.TrafficURL+"/start", map[string]string{"runID": run.ID, "scenario": run.Scenario, "profile": profile}, nil)
 }
 

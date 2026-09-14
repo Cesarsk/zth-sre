@@ -82,9 +82,24 @@ func handleRuntime(w http.ResponseWriter, r *http.Request, runtime *runtimeManag
 		return
 	}
 	if path == "run/intervention" && r.Method == http.MethodPost {
-		var input struct { Action string `json:"action"` }
-		if !decodeJSON(w, r, &input) || input.Action == "" { return }
+		var input struct {
+			Action string `json:"action"`
+		}
+		if !decodeJSON(w, r, &input) || input.Action == "" {
+			return
+		}
 		if err := runtime.intervene(r.Context(), input.Action); err != nil {
+			http.Error(w, err.Error(), http.StatusConflict)
+			return
+		}
+		writeJSONResponse(w, http.StatusOK, runtime.status())
+		return
+	}
+	if path == "run/file-evidence" && r.Method == http.MethodPost {
+		if !decodeJSON(w, r, &struct{}{}) {
+			return
+		}
+		if err := runtime.markFileEvidence(); err != nil {
 			http.Error(w, err.Error(), http.StatusConflict)
 			return
 		}

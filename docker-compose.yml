@@ -43,6 +43,7 @@ services:
     healthcheck: *health
     depends_on:
       toolbox: {condition: service_healthy}
+      file-reader: {condition: service_started}
       api-lb: {condition: service_healthy}
       dependency: {condition: service_healthy}
       prometheus: {condition: service_healthy}
@@ -54,10 +55,21 @@ services:
     environment:
       ALLOWED_ORIGINS: http://localhost:8080,http://127.0.0.1:8080
     networks: [control, lab]
+    volumes: ["./scenarios/file-forensics/app-config.json:/opt/sre-lab/app-config.json:ro"]
     sysctls:
       net.ipv4.ping_group_range: "1000 1000"
     tmpfs: ["/tmp:size=32m,mode=1777", "/home/learner:size=32m,uid=1000,gid=1000,mode=700"]
     healthcheck: *health
+
+  file-reader:
+    <<: *sandbox
+    build: {context: ., dockerfile: toolbox/Dockerfile}
+    entrypoint: [/usr/local/bin/file-reader]
+    pid: service:toolbox
+    networks: [control]
+    volumes: ["./scenarios/file-forensics/app-config.json:/opt/sre-lab/app-config.json:ro"]
+    depends_on:
+      toolbox: {condition: service_healthy}
 
   api-1:
     <<: *sandbox

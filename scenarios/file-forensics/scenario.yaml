@@ -1,0 +1,21 @@
+schema_version: 1
+id: file-forensics
+title: File Handle Forensics
+difficulty: beginner
+description: >-
+  A background application has a configuration file open. Identify the file,
+  the file descriptor, and the process holding it without using host access.
+learning_objectives:
+  - Use lsof to map an open file to a process.
+  - Distinguish a process name and PID from a file descriptor.
+  - Gather local evidence before changing or deleting a file.
+environment: {runtime: docker, topology: api-dependency}
+traffic: {profile: constant, rps: 1, duration: 5m}
+faults:
+  - {target: api, type: file_handle, config: {}}
+objectives: {availability: 0.99, p95_latency_ms: 1000}
+grading: {kind: file_forensics, window: 60s, minimum_requests: 1, minimum_offered_rps: 1}
+hints: ["Start with lsof, not a filename guess.", "Use the PID column to identify the responsible process.", "A file descriptor shows how the process currently has the file open."]
+diagram:
+  nodes: [{id: learner, label: Toolbox shell, role: investigator}, {id: app, label: file-reader, role: process}, {id: file, label: app-config.json, role: resource}, {id: fd, label: File descriptor, role: evidence}]
+  edges: [{from: learner, to: app, label: observes}, {from: app, to: fd}, {from: fd, to: file}]

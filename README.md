@@ -12,43 +12,49 @@ semantic resource diagrams and progressive tips.
 
 ## Quickstart
 
-Prerequisites: Docker Engine with Docker Compose v2.20+ (or Docker Desktop /
-OrbStack), and Make. No host Go, Node, Prometheus or troubleshooting-tool installs.
-Initial image/dependency downloads require Internet access; runtime needs no
-cloud account, monitoring service, credentials or SaaS.
+This is the complete path from a fresh machine to the first investigation.
+
+Prerequisites:
+
+- Docker Engine with Docker Compose v2.20+, Docker Desktop, or OrbStack.
+- Make.
+- At least 4 GB assigned to Docker and several GB of free disk space.
+- Internet access for the first image and dependency downloads.
+
+You do not need Go, Node, Prometheus, k6, or troubleshooting tools installed on
+your host. The lab runs those inside containers and does not need cloud accounts,
+credentials, or a SaaS service.
 
 ```sh
-git clone <repository-url> sre-lab
-cd sre-lab
+git clone https://github.com/Cesarsk/zth-sre.git
+cd zth-sre
+make bootstrap
 make up
 ```
 
-The repository URL is a placeholder until this project is published. The current
-checkout is `/Users/mini/Documents/projects/sre-lab`.
+Open <http://localhost:8080>. You should see the **Exercise index**.
 
-```text
-SRE Lab is running
-http://localhost:8080
-```
+### Start Exercising
 
-Without Make: `docker compose up -d --build --wait server`.
-Allow approximately 4 GB of Docker memory and several GB of disk for builds and
-browser-test images. The running services have a combined 896 MiB memory
-limit; this excludes Docker VM and build/test overhead. CPU is capped per service.
+1. Open **Your First Investigation**.
+2. Choose **Start walkthrough**.
+3. Wait for **System healthy**.
+4. Choose **Connect terminal**.
+5. Run the commands shown beside the terminal.
+6. Compare each result with its expected result, then check each completed step.
 
-Open the exercise index and choose **Start walkthrough** on **Your First
-Investigation**. The workspace explains the situation, objective and five steps
-beside the terminal, with commands, expected results and reflection questions.
-Wait for **System healthy**, then choose **Connect terminal**.
-Mark each checklist item after observing its expected result; this is a self-check,
-not an automatic grade. The local server saves the checklist automatically, so it is
-restored after refresh or a normal `make down` / `make up`; an investigation-notes
-area saves observations, hypotheses and next steps with it. `make reset` clears
-both with the lab baseline. This is one shared local learner record, not multi-user state.
-The eleven incident entries can be started from their runbooks. Start traffic only
-when ready; each run is single-learner and shared by anyone who can reach this
-unauthenticated private deployment.
-Try these commands in the embedded terminal:
+The walkthrough follows a real request through the API and dependency and then
+finds that request in Prometheus. It is a self-check, not an automatic grade.
+The server saves checklist state and investigation notes locally.
+
+When you are ready for an incident, return to the index and open any available
+exercise. Choose **Start exercise**, investigate the live fault with the terminal,
+watch the live metric cards, apply the suggested intervention, and choose **Check
+solution**. Each exercise uses real containers, generated traffic and Prometheus
+evidence. There are twelve executable incident exercises covering capacity,
+alerting, SLOs, dependencies, DNS, retries, memory and autoscaling.
+
+Useful commands in the embedded terminal include:
 
 ```sh
 curl -fsS http://api-lb:8080/ | jq
@@ -62,8 +68,20 @@ The API makes a real HTTP request to the dependency. Requests populate real
 Prometheus counters and histograms. **Open Prometheus** opens the read-only proxy
 inside the same origin. Advanced users can also visit `http://localhost:9090`.
 Try `up`, `sre_lab_http_requests_total`, and `rate(process_cpu_seconds_total[1m])`.
-Exercise traffic is started only after selecting an incident exercise. Reset stops
-the runner and returns API capacity and fault state to baseline.
+Exercise traffic starts only after selecting an incident exercise. **Reset exercise**
+stops the runner and returns API capacity and fault state to baseline.
+
+### Stop, Resume, Reset
+
+```sh
+make down       # stop containers; retain saved progress and metrics
+make up         # resume the lab
+make reset      # delete this lab's progress and metrics, then start clean
+```
+
+`make reset` is intentionally destructive for SRE Lab data only. It does not prune
+unrelated Docker images, volumes, or projects. Use it when you want a clean incident
+run or when a previous exercise was left active.
 
 ## Operations
 
@@ -180,7 +198,7 @@ with instructions, live component health, API-to-dependency topology and termina
 
 ## Roadmap
 
-The executable catalog currently includes eleven exercises:
+The executable catalog currently includes twelve exercises:
 
 1. CPU saturation and horizontal scaling.
 2. Noisy CPU alerts versus useful user-impact alerts.
@@ -193,6 +211,7 @@ The executable catalog currently includes eleven exercises:
 9. Retry storm and cascading failure.
 10. Memory leak and OOM recovery.
 11. Autoscaler oscillation.
+12. File handle forensics with `lsof`.
 
 Read [ARCHITECTURE.md](ARCHITECTURE.md), [ROADMAP.md](ROADMAP.md),
 [scenario design](docs/SCENARIOS.md), and [CONTRIBUTING.md](CONTRIBUTING.md).

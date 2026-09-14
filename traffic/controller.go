@@ -41,6 +41,7 @@ var (
 		"retry-storm": "alert",
 		"memory-leak": "alert",
 		"autoscaler-oscillation": "cpu",
+		"file-forensics":         "alert",
 	}
 )
 
