@@ -1,6 +1,8 @@
 schema_version: 1
 id: memory-leak
 title: Memory Leak and OOM Recovery
+goal: Restore stable capacity after distinguishing memory growth from a traffic spike.
+success_criteria: [Memory stabilizes below the operational limit during continued traffic., User-visible reliability remains healthy across the evaluation window.]
 difficulty: intermediate
 description: >-
   API memory grows over time while request traffic remains steady. Find the

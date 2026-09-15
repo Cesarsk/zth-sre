@@ -52,14 +52,16 @@ type Metadata struct {
 // Scenario is an installed, declarative exercise definition. It intentionally
 // describes desired conditions rather than commands or provider implementation.
 type Scenario struct {
-	Metadata    `yaml:",inline"`
-	Environment Environment `yaml:"environment"`
-	Traffic     Traffic     `yaml:"traffic"`
-	Faults      []Fault     `yaml:"faults"`
-	Objectives  Objectives  `yaml:"objectives"`
-	Grading     Grading     `yaml:"grading"`
-	Hints       []string    `yaml:"hints"`
-	Diagram     Diagram     `yaml:"diagram"`
+	Metadata        `yaml:",inline"`
+	Goal            string      `yaml:"goal"`
+	SuccessCriteria []string    `yaml:"success_criteria"`
+	Environment     Environment `yaml:"environment"`
+	Traffic         Traffic     `yaml:"traffic"`
+	Faults          []Fault     `yaml:"faults"`
+	Objectives      Objectives  `yaml:"objectives"`
+	Grading         Grading     `yaml:"grading"`
+	Hints           []string    `yaml:"hints"`
+	Diagram         Diagram     `yaml:"diagram"`
 }
 
 type Diagram struct {
@@ -201,6 +203,9 @@ func decode(path string) (Scenario, error) {
 func (s Scenario) validate() error {
 	if s.SchemaVersion != SchemaVersion {
 		return fmt.Errorf("schema_version must be %d", SchemaVersion)
+	}
+	if strings.TrimSpace(s.Goal) == "" || len(s.SuccessCriteria) < 2 {
+		return fmt.Errorf("goal and at least two success_criteria are required")
 	}
 	if !validID.MatchString(s.ID) || !requiredIDs[s.ID] {
 		return fmt.Errorf("unsupported scenario id %q", s.ID)

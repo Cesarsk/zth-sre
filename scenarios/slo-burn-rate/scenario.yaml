@@ -1,6 +1,8 @@
 schema_version: 1
 id: slo-burn-rate
 title: Availability SLO Burn Rate
+goal: Detect rapid availability error-budget burn with a valid request-based SLI.
+success_criteria: [The alert fires during rapid error-budget consumption., The alert is quiet at baseline and clears after recovery.]
 difficulty: intermediate
 description: >-
   Controlled API failures consume a 99.9 percent availability error budget.

@@ -1,6 +1,8 @@
 schema_version: 1
 id: file-forensics
 title: File Handle Forensics
+goal: Identify the process and file descriptor responsible for an open application file.
+success_criteria: [The exact open file and descriptor are found with lsof., The responsible process and PID are confirmed before any change.]
 difficulty: beginner
 description: >-
   A background application has a configuration file open. Identify the file,

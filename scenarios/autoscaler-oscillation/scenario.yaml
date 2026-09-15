@@ -1,6 +1,8 @@
 schema_version: 1
 id: autoscaler-oscillation
 title: Autoscaler Oscillation
+goal: Stabilize the scaling feedback loop without sacrificing user-visible reliability.
+success_criteria: [The unstable feedback pattern is identified from time-correlated evidence., Capacity remains stable and reliability meets the declared objectives.]
 difficulty: advanced
 description: >-
   A fast scaling policy reacts to a noisy signal and repeatedly changes API

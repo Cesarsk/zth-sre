@@ -21,6 +21,8 @@ type scenarioView struct {
 	Available          bool             `json:"available"`
 	Topology           string           `json:"topology"`
 	Diagram            scenario.Diagram `json:"diagram"`
+	Goal               string           `json:"goal"`
+	SuccessCriteria    []string         `json:"successCriteria"`
 }
 
 func handleRuntime(w http.ResponseWriter, r *http.Request, runtime *runtimeManager) {
@@ -28,7 +30,7 @@ func handleRuntime(w http.ResponseWriter, r *http.Request, runtime *runtimeManag
 	if r.Method == http.MethodGet && path == "scenarios" {
 		views := make([]scenarioView, 0, len(runtime.scenarios))
 		for _, item := range runtime.scenarios {
-			views = append(views, scenarioView{ID: item.ID, Title: item.Title, Difficulty: item.Difficulty, Description: item.Description, LearningObjectives: item.LearningObjectives, Hints: item.Hints, TrafficProfile: item.Traffic.Profile, GradingKind: item.Grading.Kind, Available: true, Topology: item.Environment.Topology, Diagram: item.Diagram})
+			views = append(views, scenarioView{ID: item.ID, Title: item.Title, Difficulty: item.Difficulty, Description: item.Description, LearningObjectives: item.LearningObjectives, Hints: item.Hints, TrafficProfile: item.Traffic.Profile, GradingKind: item.Grading.Kind, Available: true, Topology: item.Environment.Topology, Diagram: item.Diagram, Goal: item.Goal, SuccessCriteria: item.SuccessCriteria})
 		}
 		writeJSONResponse(w, http.StatusOK, views)
 		return
@@ -100,6 +102,21 @@ func handleRuntime(w http.ResponseWriter, r *http.Request, runtime *runtimeManag
 			return
 		}
 		if err := runtime.markFileEvidence(); err != nil {
+			http.Error(w, err.Error(), http.StatusConflict)
+			return
+		}
+		writeJSONResponse(w, http.StatusOK, runtime.status())
+		return
+	}
+	if path == "run/diagnosis" && r.Method == http.MethodPost {
+		var input struct {
+			Diagnosis string `json:"diagnosis"`
+			Evidence  string `json:"evidence"`
+		}
+		if !decodeJSON(w, r, &input) || input.Diagnosis == "" {
+			return
+		}
+		if err := runtime.setDiagnosis(input.Diagnosis, input.Evidence); err != nil {
 			http.Error(w, err.Error(), http.StatusConflict)
 			return
 		}

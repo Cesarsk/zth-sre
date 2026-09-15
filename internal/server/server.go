@@ -186,7 +186,7 @@ func New(c Config) (*Handler, error) {
 			return
 		}
 		isProgressWrite := r.Method == http.MethodPut && strings.HasPrefix(r.URL.Path, "/api/progress/")
-		isRuntimeMutation := runtime != nil && (strings.HasSuffix(r.URL.Path, "/start") || strings.HasSuffix(r.URL.Path, "/reset") || strings.HasSuffix(r.URL.Path, "/hint") || strings.HasSuffix(r.URL.Path, "/capacity") || strings.HasSuffix(r.URL.Path, "/phase") || strings.HasSuffix(r.URL.Path, "/alert") || strings.HasSuffix(r.URL.Path, "/check") || strings.HasSuffix(r.URL.Path, "/file-evidence")) && (r.Method == http.MethodPost || r.Method == http.MethodPut)
+		isRuntimeMutation := runtime != nil && (strings.HasSuffix(r.URL.Path, "/start") || strings.HasSuffix(r.URL.Path, "/reset") || strings.HasSuffix(r.URL.Path, "/hint") || strings.HasSuffix(r.URL.Path, "/capacity") || strings.HasSuffix(r.URL.Path, "/phase") || strings.HasSuffix(r.URL.Path, "/intervention") || strings.HasSuffix(r.URL.Path, "/alert") || strings.HasSuffix(r.URL.Path, "/check") || strings.HasSuffix(r.URL.Path, "/file-evidence") || strings.HasSuffix(r.URL.Path, "/diagnosis")) && (r.Method == http.MethodPost || r.Method == http.MethodPut)
 		if r.Method != http.MethodGet && !isProgressWrite && !isRuntimeMutation && !(r.Method == http.MethodHead && !strings.HasPrefix(r.URL.Path, "/api") && !strings.HasPrefix(r.URL.Path, "/prometheus") && r.URL.Path != "/terminal" && r.URL.Path != "/healthz") {
 			w.Header().Set("Allow", "GET")
 			http.Error(w, "method not allowed", http.StatusMethodNotAllowed)

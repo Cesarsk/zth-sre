@@ -1,6 +1,8 @@
 schema_version: 1
 id: connection-pool
 title: Connection Pool Exhaustion
+goal: Restore service behavior by correcting bounded concurrency pressure.
+success_criteria: [The pool constraint is identified without relying on CPU alone., Latency and availability recover without creating dependency errors.]
 difficulty: intermediate
 description: >-
   Requests wait behind a small connection pool while CPU remains moderate.

@@ -1,6 +1,8 @@
 schema_version: 1
 id: retry-storm
 title: Retry Storm and Cascading Failure
+goal: Stop retry amplification and restore stable dependency pressure.
+success_criteria: [Retry amplification is identified from caller and dependency evidence., Availability and latency recover without renewed downstream overload.]
 difficulty: advanced
 description: >-
   Dependency failures trigger retries from the API and amplify load. Stabilize

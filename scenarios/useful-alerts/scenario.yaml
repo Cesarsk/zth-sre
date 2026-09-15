@@ -1,6 +1,8 @@
 schema_version: 1
 id: useful-alerts
 title: Useful Alerts for User Impact
+goal: Create an alert that tracks meaningful user impact rather than harmless CPU noise.
+success_criteria: [The alert remains quiet during the healthy baseline., The alert fires during impairment and clears after recovery.]
 difficulty: intermediate
 description: >-
   CPU work creates harmless variation before higher demand causes user-visible

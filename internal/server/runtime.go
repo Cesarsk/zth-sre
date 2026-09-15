@@ -45,6 +45,8 @@ type runState struct {
 	RecoverySeen     bool      `json:"recoverySeen"`
 	Interventions    []string  `json:"interventions,omitempty"`
 	FileEvidenceSeen bool      `json:"fileEvidenceSeen"`
+	Diagnosis        string    `json:"diagnosis,omitempty"`
+	EvidenceNote     string    `json:"evidenceNote,omitempty"`
 }
 
 type runtimeManager struct {
@@ -144,6 +146,9 @@ func (m *runtimeManager) setCapacity(ctx context.Context, backends int) error {
 	if m.active == nil || (m.active.Scenario != "cpu-saturation" && m.active.Scenario != "vertical-horizontal") {
 		return errors.New("CPU saturation run is not active")
 	}
+	if err := m.requireDiagnosis(); err != nil {
+		return err
+	}
 	if backends != 1 && backends != 2 {
 		return errors.New("active_backends must be 1 or 2")
 	}
@@ -163,6 +168,9 @@ func (m *runtimeManager) intervene(ctx context.Context, action string) error {
 	defer m.mu.Unlock()
 	if m.active == nil {
 		return errors.New("no active run")
+	}
+	if err := m.requireDiagnosis(); err != nil {
+		return err
 	}
 	allowed := map[string]string{
 		"dependency-recovery": "dependency-bottleneck",
@@ -191,6 +199,11 @@ func (m *runtimeManager) setPhase(ctx context.Context, phase string) error {
 	if m.active == nil {
 		return errors.New("no active run")
 	}
+	if phase == "recovery" {
+		if err := m.requireDiagnosis(); err != nil {
+			return err
+		}
+	}
 	if phase != "baseline" && phase != "incident" && phase != "recovery" {
 		return errors.New("phase must be baseline, incident, or recovery")
 	}
@@ -209,30 +222,63 @@ func (m *runtimeManager) setPhase(ctx context.Context, phase string) error {
 	return nil
 }
 
+var expectedDiagnoses = map[string]string{
+	"cpu-saturation": "api-capacity", "useful-alerts": "user-impact", "slo-burn-rate": "error-budget-burn",
+	"vertical-horizontal": "api-capacity", "dependency-bottleneck": "dependency", "connection-pool": "concurrency",
+	"latency-slo": "latency", "dns-failure": "service-discovery", "retry-storm": "retry-amplification",
+	"memory-leak": "memory-growth", "autoscaler-oscillation": "feedback-loop", "file-forensics": "file-owner",
+}
+
+func (m *runtimeManager) requireDiagnosis() error {
+	if m.active == nil || m.active.Diagnosis == "" {
+		return errors.New("record a diagnosis before applying a mitigation")
+	}
+	if expectedDiagnoses[m.active.Scenario] != m.active.Diagnosis {
+		return errors.New("diagnosis does not match the exercise evidence")
+	}
+	return nil
+}
+
+func (m *runtimeManager) setDiagnosis(diagnosis, note string) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	if m.active == nil {
+		return errors.New("no active run")
+	}
+	if _, ok := expectedDiagnoses[m.active.Scenario]; !ok || len(note) < 10 || len(note) > 2000 {
+		return errors.New("include a diagnosis and at least 10 characters of evidence")
+	}
+	m.active.Diagnosis, m.active.EvidenceNote = diagnosis, note
+	return nil
+}
+
 func (m *runtimeManager) scheduleAlertEvaluation(runID, phase string) {
 	go func() {
-		// Allow a request burst and at least one Prometheus scrape to represent the
-		// newly selected phase before evaluating the learner's expression.
-		time.Sleep(6 * time.Second)
-		m.mu.Lock()
-		if m.active == nil || m.active.ID != runID || m.active.AlertExpression == "" {
+		// Re-evaluate through the recovery window so range queries can age out
+		// incident samples instead of requiring the learner to guess a delay.
+		for attempt := 0; attempt < 12; attempt++ {
+			time.Sleep(6 * time.Second)
+			m.mu.Lock()
+			if m.active == nil || m.active.ID != runID || m.active.Phase != phase || m.active.AlertExpression == "" {
+				m.mu.Unlock()
+				return
+			}
+			expression := m.active.AlertExpression
 			m.mu.Unlock()
-			return
-		}
-		expression := m.active.AlertExpression
-		m.mu.Unlock()
-		fired := m.evaluateAlert(context.Background(), expression)
-		m.mu.Lock()
-		defer m.mu.Unlock()
-		if m.active == nil || m.active.ID != runID {
-			return
-		}
-		if phase == "incident" {
-			m.active.AlertFired = fired
-		} else if phase == "recovery" {
-			m.active.AlertCleared = !fired
-		} else {
-			m.active.AlertBaseline = fired
+			fired := m.evaluateAlert(context.Background(), expression, runID)
+			m.mu.Lock()
+			if m.active == nil || m.active.ID != runID || m.active.Phase != phase {
+				m.mu.Unlock()
+				return
+			}
+			if phase == "incident" {
+				m.active.AlertFired = fired
+			} else if phase == "recovery" {
+				m.active.AlertCleared = !fired
+			} else {
+				m.active.AlertBaseline = fired
+			}
+			m.mu.Unlock()
 		}
 	}()
 }
@@ -257,6 +303,9 @@ func (m *runtimeManager) setAlert(ctx context.Context, expression string) error 
 	if m.active == nil || (m.active.Scenario != "useful-alerts" && m.active.Scenario != "slo-burn-rate") {
 		return errors.New("an alert exercise is not active")
 	}
+	if err := m.requireDiagnosis(); err != nil {
+		return err
+	}
 	if len(expression) == 0 || len(expression) > 500 || strings.ContainsAny(expression, ";\n\r") {
 		return errors.New("alert expression is empty or contains unsupported characters")
 	}
@@ -279,6 +328,10 @@ func (m *runtimeManager) check(ctx context.Context) map[string]any {
 	availability, p95, count := m.serviceEvidence(ctx, m.active.ID)
 	item := m.byID[m.active.Scenario]
 	result := map[string]any{"passed": false, "scenario": m.active.Scenario, "availability": availability, "p95_latency_ms": p95, "requests": count, "objective_availability": item.Objectives.Availability, "objective_p95_latency_ms": item.Objectives.P95LatencyMS, "minimum_requests": item.Grading.MinimumRequests}
+	result["goal"] = item.Goal
+	result["success_criteria"] = item.SuccessCriteria
+	result["diagnosisRecorded"] = m.active.Diagnosis != ""
+	result["diagnosisCorrect"] = expectedDiagnoses[m.active.Scenario] == m.active.Diagnosis
 	switch m.active.Scenario {
 	case "cpu-saturation":
 		result["passed"] = hasIntervention(m.active, "horizontal-capacity") && m.active.RecoverySeen && availability >= item.Objectives.Availability && p95 <= float64(item.Objectives.P95LatencyMS) && count >= float64(item.Grading.MinimumRequests)
@@ -318,6 +371,11 @@ func (m *runtimeManager) check(ctx context.Context) map[string]any {
 		result["feedback"] = "Use lsof to identify the open file, then map the file descriptor to the responsible file-reader process."
 	}
 	passed, _ := result["passed"].(bool)
+	if passed && !m.activeDiagnosisCorrect() {
+		passed = false
+		result["passed"] = false
+		result["feedback"] = "Record an evidence-backed diagnosis before checking the achieved outcome."
+	}
 	feedback, _ := result["feedback"].(string)
 	_ = m.history.Add(history.Record{RunID: m.active.ID, Scenario: m.active.Scenario, StartedAt: m.active.StartedAt, CheckedAt: time.Now().UTC(), Passed: passed, Feedback: feedback, Availability: availability, P95MS: p95})
 	return result
@@ -329,8 +387,15 @@ func (m *runtimeManager) markFileEvidence() error {
 	if m.active == nil || m.active.Scenario != "file-forensics" {
 		return errors.New("file forensics exercise is not active")
 	}
+	if err := m.requireDiagnosis(); err != nil {
+		return err
+	}
 	m.active.FileEvidenceSeen = true
 	return nil
+}
+
+func (m *runtimeManager) activeDiagnosisCorrect() bool {
+	return m.active != nil && expectedDiagnoses[m.active.Scenario] == m.active.Diagnosis
 }
 
 func hasIntervention(run *runState, action string) bool {
@@ -354,11 +419,13 @@ func (m *runtimeManager) serviceEvidence(ctx context.Context, runID string) (flo
 	return availability, p95 * 1000, total
 }
 
-func (m *runtimeManager) evaluateAlert(ctx context.Context, expression string) bool {
+func (m *runtimeManager) evaluateAlert(ctx context.Context, expression, runID string) bool {
 	if expression == "" {
 		return false
 	}
-	value, err := m.query(ctx, expression)
+	// Keep alert checks isolated from metrics left by earlier learner runs.
+	scoped := strings.ReplaceAll(expression, "sre_lab_http_requests_total{", fmt.Sprintf("sre_lab_http_requests_total{run_id=%q,", runID))
+	value, err := m.query(ctx, scoped)
 	return err == nil && value != 0
 }
 

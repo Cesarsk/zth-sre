@@ -1,6 +1,8 @@
 schema_version: 1
 id: dns-failure
 title: DNS Failure
+goal: Restore service discovery and verify end-to-end reachability.
+success_criteria: [DNS failure is distinguished from dependency process health., Fresh API requests recover with the dependency reachable by name.]
 difficulty: intermediate
 description: >-
   The API cannot reliably resolve its dependency. Investigate name resolution

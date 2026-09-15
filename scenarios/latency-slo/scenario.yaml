@@ -1,6 +1,8 @@
 schema_version: 1
 id: latency-slo
 title: Latency SLO vs Availability SLO
+goal: Detect and recover a latency SLO violation without confusing it with availability.
+success_criteria: [The latency SLI shows the p95 objective violation., p95 latency recovers while availability remains independently measured.]
 difficulty: intermediate
 description: >-
   Requests succeed but violate a latency objective. Build evidence for a

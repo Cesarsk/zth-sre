@@ -31,6 +31,7 @@ internal contract, not a published compatibility promise.
 | `schema_version`, `id` | Explicit format version and stable unique identity |
 | `title`, `difficulty`, `description` | Learner-facing operational context |
 | `learning_objectives` | Reasoning skills, not a required command sequence |
+| `goal`, `success_criteria` | The outcome the learner must achieve and the observable conditions that prove it |
 | `environment` | Required `docker` runtime and `api-dependency` topology |
 | `traffic` | Discriminated constant/ramp/spike profile with bounded duration |
 | `faults` | Desired failure/workload, target role, and typed bounded config |
@@ -58,6 +59,14 @@ definitions. Scenario definitions are trusted installed content, not
 learner-uploaded arbitrary files. Hidden faults must not leak through catalog APIs.
 
 ## Lifecycle and Evidence
+
+Every executable run has two separate gates. First, the learner records a
+diagnosis and a short evidence note; recovery controls remain locked until the
+diagnosis matches the exercise's evidence model. Second, the grader evaluates
+the real runtime outcome against `success_criteria`, including sustained
+traffic, availability, latency, alert behavior, or the exercise-specific
+forensic evidence. Commands are optional investigation tools, not completion
+criteria.
 
 Start validates first, restores baseline, waits for readiness, marks the metric
 epoch and starts load. Reset stops traffic, clears faults/rules/capacity/hints,

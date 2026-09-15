@@ -108,6 +108,18 @@ test('Toolbox is available immediately from an exercise and survives run startup
   await page.getByRole('button', { name: 'Reset exercise' }).click();
 });
 
+test('exercise mitigation is locked until an evidence-backed diagnosis is recorded', async ({ page }) => {
+  await page.goto('/#/exercises/dependency-bottleneck');
+  await page.getByRole('button', { name: 'Start exercise' }).click();
+  await expect(page.getByRole('button', { name: 'Restore dependency path' })).toBeDisabled();
+  await page.getByLabel('My diagnosis').selectOption('dependency');
+  await page.getByLabel('Evidence note').fill('Dependency latency is elevated while API capacity remains available.');
+  await page.getByRole('button', { name: 'Record diagnosis' }).click();
+  await expect(page.getByText('Diagnosis recorded.', { exact: false })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Restore dependency path' })).toBeEnabled();
+  await page.getByRole('button', { name: 'Reset exercise' }).click();
+});
+
 test('the Prometheus UI renders through the same-origin proxy', async ({ page }) => {
   const errors: string[] = [];
   page.on('pageerror', error => errors.push(error.message));

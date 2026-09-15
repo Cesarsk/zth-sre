@@ -1,6 +1,8 @@
 schema_version: 1
 id: vertical-horizontal
 title: Vertical or Horizontal Scaling
+goal: Choose a capacity strategy using evidence and restore reliability under load.
+success_criteria: [The chosen capacity change improves user-visible availability., p95 latency and availability meet their objectives during sustained traffic.]
 difficulty: beginner
 description: >-
   The API is constrained by CPU. Compare adding resource to one instance with

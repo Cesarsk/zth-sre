@@ -24,6 +24,11 @@ func TestLoadInstalledCatalog(t *testing.T) {
 			t.Errorf("missing scenario %q", id)
 		}
 	}
+	for _, definition := range scenarios {
+		if definition.Goal == "" || len(definition.SuccessCriteria) < 2 {
+			t.Errorf("scenario %q has no complete goal contract", definition.ID)
+		}
+	}
 }
 
 func TestLoadRejectsInvalidDefinitions(t *testing.T) {
