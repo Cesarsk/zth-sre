@@ -2,7 +2,7 @@
 
 Audited on 2026-09-10 using Docker Engine 29.4.0 / Compose v5.1.2 on OrbStack
 (Linux amd64 containers on macOS). This verifies the Phase 1 foundation and the
-initial executable runtime for all eleven exercises. It is not a claim of production
+initial executable runtime for all thirteen exercises. It is not a claim of production
 alerting or cold autoscaling fidelity.
 
 ## Deliverable Checklist
@@ -12,7 +12,7 @@ alerting or cold autoscaling fidelity.
 | Inspect existing repository | No prior SRE Lab project; new checkout under `/Users/mini/Documents/projects/sre-lab`; existing private Caddy/Status conventions inspected |
 | Architecture before implementation | ARCHITECTURE.md and ROADMAP.md created before code; component, lifecycle, terminal, metrics, grading, reset and security boundaries recorded |
 | Concrete repository structure | ARCHITECTURE.md tree; one Go module, React package, toolbox image, observability config and Compose stack |
-| YAML model and eleven exercises | ARCHITECTURE.md, docs/SCENARIOS.md, strict loader tests, and eleven installed YAML definitions |
+| YAML model and thirteen exercises | ARCHITECTURE.md, docs/SCENARIOS.md, strict loader tests, and thirteen installed YAML definitions |
 | Future Kubernetes/networking/KWOK risks | ARCHITECTURE.md provider/risk section; no unimplemented provider is advertised as working |
 | Go backend + frontend | cmd/server, internal/server, frontend; production TypeScript/Vite build completed in Docker |
 | Real API and dependency | cmd/demo, internal/demo; API actually calls dependency; real health and Prometheus metrics tested |
@@ -91,7 +91,7 @@ cross-origin write rejection. Browser coverage saves checkboxes and notes,
 reloads and restores both. A manual server recreation also restored saved step
 indexes from the named volume before the test record was cleared.
 
-The eleven executable catalog entries now have situation, objective, learning objectives,
+The thirteen executable catalog entries now have situation, objective, learning objectives,
 investigation steps, hover/focus answers and progressive hints. CPU start, warm
 capacity activation and reset were exercised through the browser; the service
 runtime also exposes deterministic alert and SLO phase controls.

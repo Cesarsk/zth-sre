@@ -16,7 +16,7 @@ Phase 0, Phase 1, and the executable scenario/runtime phases are implemented and
 | 5 - CPU Exercise | Limited API capacity, actual CPU work, balancer, controlled scaling, grading | Implemented: real k6 traffic, CPU saturation, second warm API backend activation, sustained outcome check and reset |
 | 6 - Alert Exercise | Noise/impact phases, validated read-only PromQL expression, behavior check | Implemented: deterministic incident/recovery phases and fire/clear evaluation after fresh scrapes |
 | 7 - SLO Exercise | Valid-request SLI, 99.9% SLO, intermittent failure/burn-rate lesson | Implemented: deterministic error-budget incident, Prometheus evidence, expression fire/clear check |
-| 8 - Polish | Error handling, contributor docs, UI clarity and full smoke coverage | New contributor can discover and run the full eleven-exercise catalog locally with one browser and no host lab tools |
+| 8 - Polish | Error handling, contributor docs, UI clarity and full smoke coverage | New contributor can discover and run the full thirteen-exercise catalog locally with one browser and no host lab tools |
 
 ## Phase 1 Checklist
 
@@ -35,7 +35,7 @@ Phase 0, Phase 1, and the executable scenario/runtime phases are implemented and
 ## MVP Completion Gate (Later)
 
 A clean clone runs with `make up` at localhost:8080. A learner completes the
-eleven-exercise catalog in the same UI, using real traffic, metrics and an embedded
+thirteen-exercise catalog in the same UI, using real traffic, metrics and an embedded
 toolbox terminal; changes the system; receives outcome-based grades; requests
 progressive hints; and resets reliably. End-to-end tests cover start, traffic,
 metric visibility, intervention, grading and reset. No cloud account or paid

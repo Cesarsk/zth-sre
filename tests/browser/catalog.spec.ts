@@ -3,9 +3,9 @@ import { expect, test } from '@playwright/test';
 test('index supports discovery, clear availability and a guided workspace', async ({ page }) => {
   await page.goto('/');
   await expect(page.getByRole('heading', { name: 'Exercise index', exact: true })).toBeVisible();
-  await expect(page.locator('.exercise-card')).toHaveCount(13);
+  await expect(page.locator('.exercise-card')).toHaveCount(14);
   await expect(page.getByText('Available walkthrough', { exact: true })).toHaveCount(1);
-  await expect(page.getByText('Available exercise', { exact: true })).toHaveCount(12);
+  await expect(page.getByText('Available exercise', { exact: true })).toHaveCount(13);
   await expect(page.getByRole('button', { name: 'Connect terminal' })).toHaveCount(0);
   const search = page.getByRole('searchbox', { name: 'Find an exercise' });
   await search.fill('capacity');
@@ -66,7 +66,7 @@ test('unknown exercise is explicit and catalog fits a narrow viewport', async ({
 });
 
 test('each recommended exercise has a resource diagram and consultable tips', async ({ page }) => {
-  for (const id of ['vertical-horizontal', 'dependency-bottleneck', 'connection-pool', 'latency-slo', 'dns-failure', 'retry-storm', 'memory-leak', 'autoscaler-oscillation']) {
+  for (const id of ['vertical-horizontal', 'dependency-bottleneck', 'connection-pool', 'latency-slo', 'dns-failure', 'retry-storm', 'memory-leak', 'autoscaler-oscillation', 'blocked-traffic']) {
     await page.goto(`/#/exercises/${id}`);
     await page.getByRole('button', { name: 'Topology', exact: true }).click();
     await expect(page.getByRole('heading', { name: 'Resource topology' })).toBeVisible();

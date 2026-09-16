@@ -1,7 +1,7 @@
 # Scenario Authoring Contract
 
 **The scenario engine provides strict installed-scenario parsing and validation.**
-The loader reads `scenarios/**/*.yaml` and accepts the eleven executable catalog IDs
+The loader reads `scenarios/**/*.yaml` and accepts the thirteen executable catalog IDs
 including the original three and the eight recommended follow-up exercises. The server exposes their
 catalog, serialized start/reset/status, progressive hints, deterministic phase
 controls and outcome checks; runtime state is kept behind fixed internal service
@@ -52,9 +52,12 @@ exercise conditions, not commands or tool-specific settings. Unsupported fields,
 types, targets, topology, runtime, grades, and objective units are validation
 errors rather than ignored content.
 
+The `network_policy` fault applies to the dependency boundary and uses an empty
+configuration because the blocked flow is fixed installed content.
+
 Validation rejects unknown and duplicate fields, duplicate or unsupported IDs,
 invalid targets, negative or excessive rates/durations, impossible probability
-ranges, and runtime capability mismatches. It also requires all three installed
+ranges, and runtime capability mismatches. It also requires all installed
 definitions. Scenario definitions are trusted installed content, not
 learner-uploaded arbitrary files. Hidden faults must not leak through catalog APIs.
 
@@ -100,6 +103,7 @@ lab windows illustrate reasoning; they are not production paging prescriptions.
 9. `retry-storm`: stabilize amplified dependency failures.
 10. `memory-leak`: identify growth and stable recovery.
 11. `autoscaler-oscillation`: diagnose unstable feedback and cooldown.
+12. `blocked-traffic`: separate DNS, transport policy and dependency health.
 
 Before shipping an exercise, demonstrate start, real traffic, visible evidence,
 learner intervention, grading and reset in an end-to-end test. See ROADMAP.md for

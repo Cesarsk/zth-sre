@@ -173,13 +173,14 @@ func (m *runtimeManager) intervene(ctx context.Context, action string) error {
 		return err
 	}
 	allowed := map[string]string{
-		"dependency-recovery": "dependency-bottleneck",
-		"pool-recovery":       "connection-pool",
-		"latency-budget":      "latency-slo",
-		"dns-recovery":        "dns-failure",
-		"retry-budget":        "retry-storm",
-		"replace-capacity":    "memory-leak",
-		"stabilize-policy":    "autoscaler-oscillation",
+		"dependency-recovery":     "dependency-bottleneck",
+		"pool-recovery":           "connection-pool",
+		"latency-budget":          "latency-slo",
+		"dns-recovery":            "dns-failure",
+		"retry-budget":            "retry-storm",
+		"replace-capacity":        "memory-leak",
+		"stabilize-policy":        "autoscaler-oscillation",
+		"network-policy-recovery": "blocked-traffic",
 	}
 	if allowed[action] != m.active.Scenario {
 		return errors.New("intervention is not valid for this exercise")
@@ -226,7 +227,7 @@ var expectedDiagnoses = map[string]string{
 	"cpu-saturation": "api-capacity", "useful-alerts": "user-impact", "slo-burn-rate": "error-budget-burn",
 	"vertical-horizontal": "api-capacity", "dependency-bottleneck": "dependency", "connection-pool": "concurrency",
 	"latency-slo": "latency", "dns-failure": "service-discovery", "retry-storm": "retry-amplification",
-	"memory-leak": "memory-growth", "autoscaler-oscillation": "feedback-loop", "file-forensics": "file-owner",
+	"memory-leak": "memory-growth", "autoscaler-oscillation": "feedback-loop", "file-forensics": "file-owner", "blocked-traffic": "network-policy",
 }
 
 func (m *runtimeManager) requireDiagnosis() error {
@@ -369,6 +370,9 @@ func (m *runtimeManager) check(ctx context.Context) map[string]any {
 	case "file-forensics":
 		result["passed"] = m.active.FileEvidenceSeen
 		result["feedback"] = "Use lsof to identify the open file, then map the file descriptor to the responsible file-reader process."
+	case "blocked-traffic":
+		result["passed"] = hasIntervention(m.active, "network-policy-recovery") && m.active.RecoverySeen && availability >= item.Objectives.Availability && p95 <= float64(item.Objectives.P95LatencyMS) && count >= float64(item.Grading.MinimumRequests)
+		result["feedback"] = "Prove DNS resolution and transport reachability separately, correct the narrow network policy, and verify the dependency path under sustained traffic."
 	}
 	passed, _ := result["passed"].(bool)
 	if passed && !m.activeDiagnosisCorrect() {
@@ -468,7 +472,7 @@ func (m *runtimeManager) query(ctx context.Context, expression string) (float64,
 }
 
 func (m *runtimeManager) startTraffic(ctx context.Context, run *runState) error {
-	profile := map[string]string{"cpu-saturation": "cpu", "useful-alerts": "alert", "slo-burn-rate": "slo", "vertical-horizontal": "cpu", "dependency-bottleneck": "alert", "connection-pool": "alert", "latency-slo": "slo", "dns-failure": "alert", "retry-storm": "alert", "memory-leak": "alert", "autoscaler-oscillation": "cpu", "file-forensics": "alert"}[run.Scenario]
+	profile := map[string]string{"cpu-saturation": "cpu", "useful-alerts": "alert", "slo-burn-rate": "slo", "vertical-horizontal": "cpu", "dependency-bottleneck": "alert", "connection-pool": "alert", "latency-slo": "slo", "dns-failure": "alert", "retry-storm": "alert", "memory-leak": "alert", "autoscaler-oscillation": "cpu", "file-forensics": "alert", "blocked-traffic": "alert"}[run.Scenario]
 	return m.requestJSON(ctx, http.MethodPost, m.config.TrafficURL+"/start", map[string]string{"runID": run.ID, "scenario": run.Scenario, "profile": profile}, nil)
 }
 
@@ -502,6 +506,8 @@ func (m *runtimeManager) applyState(ctx context.Context, phase string) error {
 			memoryMB = 2
 		case "slo-burn-rate":
 			failures = 5
+		case "blocked-traffic":
+			failures = 1
 		}
 	}
 	apiState := map[string]int{"cpu_work": cpu, "failure_every": failures, "latency_ms": 0, "dependency_failure_every": 0, "retries": retries, "max_concurrency": maxConcurrency, "memory_mb": memoryMB}

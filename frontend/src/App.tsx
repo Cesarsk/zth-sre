@@ -6,7 +6,7 @@ import exercises from './content/exercises.json';
 import { CommandBlock, InvestigationNotes } from './LearningTools';
 
 const names = ['api', 'dependency', 'prometheus', 'toolbox'] as const;
-const scenarioExerciseIDs = ['cpu-saturation', 'useful-alerts', 'slo-burn-rate', 'vertical-horizontal', 'dependency-bottleneck', 'connection-pool', 'latency-slo', 'dns-failure', 'retry-storm', 'memory-leak', 'autoscaler-oscillation', 'file-forensics'];
+const scenarioExerciseIDs = ['cpu-saturation', 'useful-alerts', 'slo-burn-rate', 'vertical-horizontal', 'dependency-bottleneck', 'connection-pool', 'latency-slo', 'dns-failure', 'retry-storm', 'memory-leak', 'autoscaler-oscillation', 'file-forensics', 'blocked-traffic'];
 const interventionLabels: Record<string, { action: string; label: string }> = {
   'dependency-bottleneck': { action: 'dependency-recovery', label: 'Restore dependency path' },
   'connection-pool': { action: 'pool-recovery', label: 'Restore connection pool' },
@@ -15,6 +15,7 @@ const interventionLabels: Record<string, { action: string; label: string }> = {
   'retry-storm': { action: 'retry-budget', label: 'Stop retry amplification' },
   'memory-leak': { action: 'replace-capacity', label: 'Replace unhealthy capacity' },
   'autoscaler-oscillation': { action: 'stabilize-policy', label: 'Stabilize autoscaler policy' },
+  'blocked-traffic': { action: 'network-policy-recovery', label: 'Correct egress policy' },
 };
 const diagnosisOptions: Record<string, { value: string; label: string }[]> = {
   'cpu-saturation': [{ value: 'api-capacity', label: 'API capacity / CPU saturation' }, { value: 'dependency', label: 'Dependency failure' }, { value: 'latency', label: 'Latency-only regression' }],
@@ -29,6 +30,7 @@ const diagnosisOptions: Record<string, { value: string; label: string }[]> = {
   'memory-leak': [{ value: 'memory-growth', label: 'Unbounded memory growth' }, { value: 'api-capacity', label: 'CPU capacity' }, { value: 'dependency', label: 'Dependency failure' }],
   'autoscaler-oscillation': [{ value: 'feedback-loop', label: 'Unstable scaling feedback loop' }, { value: 'api-capacity', label: 'Static API capacity' }, { value: 'dependency', label: 'Dependency bottleneck' }],
   'file-forensics': [{ value: 'file-owner', label: 'Process owns the open file descriptor' }, { value: 'memory-growth', label: 'Memory growth' }, { value: 'dependency', label: 'Dependency failure' }],
+  'blocked-traffic': [{ value: 'network-policy', label: 'Narrow egress policy blocks the flow' }, { value: 'service-discovery', label: 'DNS resolution failure' }, { value: 'dependency', label: 'Dependency process failure' }],
 };
 type ComponentName = typeof names[number];
 type LabStatus = {

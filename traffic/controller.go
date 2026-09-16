@@ -29,19 +29,20 @@ const (
 var (
 	runIDPattern = regexp.MustCompile(`^[A-Za-z0-9][A-Za-z0-9_-]{0,63}$`)
 	profiles     = map[string]string{
-		"cpu-saturation": "cpu",
-		"useful-alerts":  "alert",
-		"alerting":       "alert",
-		"slo-burn-rate":  "slo",
-		"vertical-horizontal": "cpu",
-		"dependency-bottleneck": "alert",
-		"connection-pool": "alert",
-		"latency-slo": "slo",
-		"dns-failure": "alert",
-		"retry-storm": "alert",
-		"memory-leak": "alert",
+		"cpu-saturation":         "cpu",
+		"useful-alerts":          "alert",
+		"alerting":               "alert",
+		"slo-burn-rate":          "slo",
+		"vertical-horizontal":    "cpu",
+		"dependency-bottleneck":  "alert",
+		"connection-pool":        "alert",
+		"latency-slo":            "slo",
+		"dns-failure":            "alert",
+		"retry-storm":            "alert",
+		"memory-leak":            "alert",
 		"autoscaler-oscillation": "cpu",
 		"file-forensics":         "alert",
+		"blocked-traffic":        "alert",
 	}
 )
 

@@ -36,6 +36,7 @@ var (
 		"memory-leak":            true,
 		"autoscaler-oscillation": true,
 		"file-forensics":         true,
+		"blocked-traffic":        true,
 	}
 )
 
@@ -325,6 +326,10 @@ func (f Fault) validate() error {
 	case "file_handle":
 		if f.Target != "api" || f.Config != (FaultConfig{}) {
 			return fmt.Errorf("file_handle requires api target and empty config")
+		}
+	case "network_policy":
+		if f.Target != "dependency" || f.Config != (FaultConfig{}) {
+			return fmt.Errorf("network_policy requires dependency target and empty config")
 		}
 	default:
 		return fmt.Errorf("unsupported fault type %q", f.Type)

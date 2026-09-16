@@ -51,8 +51,8 @@ When you are ready for an incident, return to the index and open any available
 exercise. Choose **Start exercise**, investigate the live fault with the terminal,
 watch the live metric cards, apply the suggested intervention, and choose **Check
 solution**. Each exercise uses real containers, generated traffic and Prometheus
-evidence. There are twelve executable incident exercises covering capacity,
-alerting, SLOs, dependencies, DNS, retries, memory and autoscaling.
+evidence. There are thirteen executable incident exercises covering capacity,
+alerting, SLOs, dependencies, DNS, blocked traffic, retries, memory and autoscaling.
 
 Useful commands in the embedded terminal include:
 
@@ -199,7 +199,7 @@ with instructions, live component health, API-to-dependency topology and termina
 
 ## Roadmap
 
-The executable catalog currently includes twelve exercises:
+The executable catalog currently includes thirteen exercises:
 
 1. CPU saturation and horizontal scaling.
 2. Noisy CPU alerts versus useful user-impact alerts.
@@ -213,6 +213,7 @@ The executable catalog currently includes twelve exercises:
 10. Memory leak and OOM recovery.
 11. Autoscaler oscillation.
 12. File handle forensics with `lsof`.
+13. Blocked partner traffic and narrow network-policy recovery.
 
 Read [ARCHITECTURE.md](ARCHITECTURE.md), [ROADMAP.md](ROADMAP.md),
 [scenario design](docs/SCENARIOS.md), and [CONTRIBUTING.md](CONTRIBUTING.md).

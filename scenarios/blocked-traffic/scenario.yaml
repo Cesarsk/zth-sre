@@ -1,0 +1,40 @@
+schema_version: 1
+id: blocked-traffic
+title: Blocked Partner Traffic
+goal: Restore a required API-to-dependency flow without weakening unrelated traffic policy.
+success_criteria: [DNS resolves the dependency name from the investigation environment., The API dependency path succeeds with sufficient traffic after the narrow policy is corrected.]
+difficulty: intermediate
+description: >-
+  A dependency process is healthy, but a narrow egress policy blocks the API's
+  required traffic. Separate name resolution, transport reachability, and
+  application health before changing the policy.
+learning_objectives:
+  - Distinguish DNS resolution from TCP reachability and application health.
+  - Identify a source, destination, protocol, and port in a network policy.
+  - Verify a narrowly scoped network change under sustained traffic.
+environment:
+  runtime: docker
+  topology: api-dependency
+traffic:
+  profile: constant
+  rps: 10
+  duration: 5m
+faults:
+  - target: dependency
+    type: network_policy
+    config: {}
+objectives:
+  availability: 0.99
+  p95_latency_ms: 750
+grading:
+  kind: service_recovery
+  window: 60s
+  minimum_requests: 500
+  minimum_offered_rps: 10
+hints:
+  - Resolve the dependency name with dig before interpreting curl or nc failures.
+  - Compare direct dependency health with the API-to-dependency request path.
+  - Correct only the blocked source, destination, protocol, and port; then keep traffic running.
+diagram:
+  nodes: [{id: toolbox, label: Toolbox investigator, role: investigator}, {id: api, label: API service, role: service}, {id: policy, label: Egress policy, role: network_policy}, {id: dependency, label: Partner dependency, role: dependency}, {id: prom, label: Prometheus, role: metrics}]
+  edges: [{from: toolbox, to: api, label: tests}, {from: api, to: policy, label: egress}, {from: policy, to: dependency, label: TCP 8080}, {from: prom, to: api, label: measures}]

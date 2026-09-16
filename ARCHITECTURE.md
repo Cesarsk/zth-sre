@@ -12,7 +12,7 @@ platform, not a collection of unrelated tools.
 SRE Lab is a single-learner, local training environment. Docker and Compose are
 the only runtime prerequisites; Make is a convenience. No cloud, SaaS, Kubernetes,
 database, authentication product, plugin system, or telemetry service is needed.
-The MVP exercise catalog contains eleven executable scenarios: the original CPU,
+The MVP exercise catalog contains thirteen executable scenarios: the original CPU,
 alerting and SLO exercises plus eight capacity, dependency, networking and
 reliability follow-ups. The first-investigation walkthrough remains a
 non-incident onboarding exercise.
@@ -94,7 +94,7 @@ Runtime API:
 
 | Endpoint | Contract |
 | --- | --- |
-| `GET /api/scenarios` | Sanitized catalog for the three installed YAML scenarios |
+| `GET /api/scenarios` | Sanitized catalog for the installed YAML scenarios |
 | `GET /api/run` | Current single-run state and phase |
 | `POST /api/scenarios/{id}/start` | Validate, baseline, configure faults and start bounded k6 |
 | `POST /api/run/reset` | Stop traffic and restore capacity/fault baseline |
