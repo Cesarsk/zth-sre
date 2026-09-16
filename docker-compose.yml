@@ -34,6 +34,7 @@ services:
       API_URL: http://api-lb:8080
       DEPENDENCY_URL: http://dependency:8080
       TRAFFIC_URL: http://traffic:8080
+      POLICY_CONTROL_URL: http://policy:8080
       LB_URL: http://api-lb:8080
       API1_URL: http://api-1:8080
       API2_URL: http://api-2:8080
@@ -48,6 +49,7 @@ services:
       dependency: {condition: service_healthy}
       prometheus: {condition: service_healthy}
       traffic: {condition: service_healthy}
+      policy: {condition: service_healthy}
 
   toolbox:
     <<: *sandbox
@@ -74,20 +76,20 @@ services:
   api-1:
     <<: *sandbox
     build: {context: ., target: demo}
-    environment: {ROLE: api, DEPENDENCY_URL: "http://dependency:8080", CPU_LIMIT_CORES: "0.5"}
+    environment: {ROLE: api, DEPENDENCY_URL: "http://policy:8080", CPU_LIMIT_CORES: "0.5"}
     networks: [lab]
     healthcheck: *health
     depends_on:
-      dependency: {condition: service_healthy}
+      policy: {condition: service_healthy}
 
   api-2:
     <<: *sandbox
     build: {context: ., target: demo}
-    environment: {ROLE: api, DEPENDENCY_URL: "http://dependency:8080", CPU_LIMIT_CORES: "0.5"}
+    environment: {ROLE: api, DEPENDENCY_URL: "http://policy:8080", CPU_LIMIT_CORES: "0.5"}
     networks: [lab]
     healthcheck: *health
     depends_on:
-      dependency: {condition: service_healthy}
+      policy: {condition: service_healthy}
 
   api-lb:
     <<: *sandbox
@@ -107,6 +109,15 @@ services:
     environment: {ROLE: dependency}
     networks: [lab]
     healthcheck: *health
+
+  policy:
+    <<: *sandbox
+    build: {context: ., target: policy}
+    environment: {UPSTREAM: "http://dependency:8080"}
+    networks: [lab]
+    healthcheck: *health
+    depends_on:
+      dependency: {condition: service_healthy}
 
   prometheus:
     <<: *sandbox

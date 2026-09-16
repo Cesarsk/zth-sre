@@ -27,6 +27,7 @@ type runtimeConfig struct {
 	API1URL       string
 	API2URL       string
 	DependencyURL string
+	PolicyURL     string
 	HistoryPath   string
 }
 
@@ -333,6 +334,11 @@ func (m *runtimeManager) check(ctx context.Context) map[string]any {
 	result["success_criteria"] = item.SuccessCriteria
 	result["diagnosisRecorded"] = m.active.Diagnosis != ""
 	result["diagnosisCorrect"] = expectedDiagnoses[m.active.Scenario] == m.active.Diagnosis
+	result["interventions"] = append([]string(nil), m.active.Interventions...)
+	result["recoverySeen"] = m.active.RecoverySeen
+	result["alertBaseline"] = m.active.AlertBaseline
+	result["alertFired"] = m.active.AlertFired
+	result["alertCleared"] = m.active.AlertCleared
 	switch m.active.Scenario {
 	case "cpu-saturation":
 		result["passed"] = hasIntervention(m.active, "horizontal-capacity") && m.active.RecoverySeen && availability >= item.Objectives.Availability && p95 <= float64(item.Objectives.P95LatencyMS) && count >= float64(item.Grading.MinimumRequests)
@@ -507,7 +513,7 @@ func (m *runtimeManager) applyState(ctx context.Context, phase string) error {
 		case "slo-burn-rate":
 			failures = 5
 		case "blocked-traffic":
-			failures = 1
+			// The dedicated policy gateway owns this fault; keep the API itself healthy.
 		}
 	}
 	apiState := map[string]int{"cpu_work": cpu, "failure_every": failures, "latency_ms": 0, "dependency_failure_every": 0, "retries": retries, "max_concurrency": maxConcurrency, "memory_mb": memoryMB}
@@ -519,6 +525,12 @@ func (m *runtimeManager) applyState(ctx context.Context, phase string) error {
 	dependencyState := map[string]int{"cpu_work": 0, "failure_every": 0, "latency_ms": latency, "dependency_failure_every": depFailures, "retries": 0, "max_concurrency": 0, "memory_mb": 0}
 	if err := m.putJSON(ctx, m.config.DependencyURL+"/admin/state", dependencyState, nil); err != nil {
 		return err
+	}
+	if m.config.PolicyURL != "" {
+		blocked := phase == "incident" && scenarioID == "blocked-traffic"
+		if err := m.putJSON(ctx, m.config.PolicyURL+"/admin/state", map[string]bool{"blocked": blocked}, nil); err != nil {
+			return err
+		}
 	}
 	backends := 2
 	if scenarioID == "cpu-saturation" || scenarioID == "vertical-horizontal" || scenarioID == "autoscaler-oscillation" {

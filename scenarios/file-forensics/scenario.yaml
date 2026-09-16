@@ -4,6 +4,9 @@ title: File Handle Forensics
 goal: Identify the process and file descriptor responsible for an open application file.
 success_criteria: [The exact open file and descriptor are found with lsof., The responsible process and PID are confirmed before any change.]
 difficulty: beginner
+prerequisites: [Basic Linux process concepts]
+required_tools: [lsof, ps]
+false_hypotheses: [Filename alone proves ownership, Host access is required]
 description: >-
   A background application has a configuration file open. Identify the file,
   the file descriptor, and the process holding it without using host access.

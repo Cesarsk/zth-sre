@@ -23,10 +23,16 @@ FROM go-base AS build
 RUN CGO_ENABLED=0 go build -trimpath -ldflags='-s -w' -o /out/server ./cmd/server && \
     CGO_ENABLED=0 go build -trimpath -ldflags='-s -w' -o /out/toolbox ./cmd/toolbox && \
     CGO_ENABLED=0 go build -trimpath -ldflags='-s -w' -o /out/demo ./cmd/demo && \
-    CGO_ENABLED=0 go build -trimpath -ldflags='-s -w' -o /out/api-lb ./cmd/api-lb
+    CGO_ENABLED=0 go build -trimpath -ldflags='-s -w' -o /out/api-lb ./cmd/api-lb && \
+    CGO_ENABLED=0 go build -trimpath -ldflags='-s -w' -o /out/policy ./cmd/policy
 
 FROM alpine:3.21.3 AS runtime
 EXPOSE 8080
+
+FROM runtime AS policy
+COPY --from=build /out/policy /usr/local/bin/policy
+USER 1000:1000
+ENTRYPOINT ["/usr/local/bin/policy"]
 
 FROM runtime AS demo
 COPY --from=build /out/demo /usr/local/bin/demo

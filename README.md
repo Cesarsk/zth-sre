@@ -111,6 +111,7 @@ No command prunes unrelated Docker images, volumes or projects.
 | `api-lb` | Fixed internal load balancer with controlled warm capacity | None |
 | `traffic` | Isolated k6 runner controlled by the server | None |
 | `dependency` | Instrumented HTTP dependency | None |
+| `policy` | Disposable API egress policy gateway | None |
 | `prometheus` | Five-second scrapes; two-hour/128 MB retention | `127.0.0.1:9090` |
 
 Prometheus and local walkthrough progress have dedicated named volumes
@@ -118,7 +119,7 @@ Prometheus and local walkthrough progress have dedicated named volumes
 JSON record owned by the non-root server; it stores checked step indexes, notes and
 an update timestamp. It is not an authentication, identity or grading system.
 Prometheus configuration is a read-only bind mount. The toolbox and demos have neither host mounts nor
-Docker socket access. Toolbox networks are internal; only the server and
+Docker socket access. The policy gateway exposes only read-only rule inspection to the toolbox; it does not grant network administration to the learner. Toolbox networks are internal; only the server and
 Prometheus join the edge bridge needed for loopback publishing. All running
 services are non-root, capability-dropped, resource-limited and read-only except
 for explicit data/tmpfs mounts.

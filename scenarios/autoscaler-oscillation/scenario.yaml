@@ -4,6 +4,9 @@ title: Autoscaler Oscillation
 goal: Stabilize the scaling feedback loop without sacrificing user-visible reliability.
 success_criteria: [The unstable feedback pattern is identified from time-correlated evidence., Capacity remains stable and reliability meets the declared objectives.]
 difficulty: advanced
+prerequisites: [Capacity and feedback-control fundamentals]
+required_tools: [curl, Prometheus]
+false_hypotheses: [Faster reactions are always better, CPU is always the best signal]
 description: >-
   A fast scaling policy reacts to a noisy signal and repeatedly changes API
   capacity. Diagnose the feedback loop and stabilize it.

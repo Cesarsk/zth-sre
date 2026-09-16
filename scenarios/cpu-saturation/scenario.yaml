@@ -4,6 +4,9 @@ title: API CPU Saturation
 goal: Restore user-visible reliability without stopping the configured traffic.
 success_criteria: [Availability meets the declared objective during the evaluation window., p95 latency meets the declared objective with sufficient traffic samples.]
 difficulty: beginner
+prerequisites: [Basic HTTP and Prometheus familiarity]
+required_tools: [curl, Prometheus]
+false_hypotheses: [Dependency outage, Stopping traffic is recovery]
 description: >-
   Sustained demand exhausts the API's constrained CPU capacity. Investigate the
   evidence, increase capacity, and verify user-visible recovery under load.

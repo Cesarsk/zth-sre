@@ -4,6 +4,9 @@ title: Blocked Partner Traffic
 goal: Restore a required API-to-dependency flow without weakening unrelated traffic policy.
 success_criteria: [DNS resolves the dependency name from the investigation environment., The API dependency path succeeds with sufficient traffic after the narrow policy is corrected.]
 difficulty: intermediate
+prerequisites: [Basic DNS, TCP, and HTTP knowledge]
+required_tools: [dig, nslookup, nc, curl]
+false_hypotheses: [Healthy dependency means every path is allowed, Allowing all egress is safe]
 description: >-
   A dependency process is healthy, but a narrow egress policy blocks the API's
   required traffic. Separate name resolution, transport reachability, and
@@ -34,6 +37,7 @@ grading:
 hints:
   - Resolve the dependency name with dig before interpreting curl or nc failures.
   - Compare direct dependency health with the API-to-dependency request path.
+  - Inspect the read-only policy view at http://policy:8080/iptables.
   - Correct only the blocked source, destination, protocol, and port; then keep traffic running.
 diagram:
   nodes: [{id: toolbox, label: Toolbox investigator, role: investigator}, {id: api, label: API service, role: service}, {id: policy, label: Egress policy, role: network_policy}, {id: dependency, label: Partner dependency, role: dependency}, {id: prom, label: Prometheus, role: metrics}]

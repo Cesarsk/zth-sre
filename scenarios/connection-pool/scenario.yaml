@@ -4,6 +4,9 @@ title: Connection Pool Exhaustion
 goal: Restore service behavior by correcting bounded concurrency pressure.
 success_criteria: [The pool constraint is identified without relying on CPU alone., Latency and availability recover without creating dependency errors.]
 difficulty: intermediate
+prerequisites: [Basic concurrency concepts]
+required_tools: [curl, Prometheus]
+false_hypotheses: [CPU is the only saturation signal, Unlimited concurrency is safe]
 description: >-
   Requests wait behind a small connection pool while CPU remains moderate.
   Identify concurrency saturation and restore reliable service.

@@ -4,6 +4,9 @@ title: Latency SLO vs Availability SLO
 goal: Detect and recover a latency SLO violation without confusing it with availability.
 success_criteria: [The latency SLI shows the p95 objective violation., p95 latency recovers while availability remains independently measured.]
 difficulty: intermediate
+prerequisites: [HTTP status and histogram familiarity]
+required_tools: [curl, Prometheus]
+false_hypotheses: [HTTP 200 means fast enough, Average latency represents tail users]
 description: >-
   Requests succeed but violate a latency objective. Build evidence for a
   latency SLI instead of relying only on HTTP status.

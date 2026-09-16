@@ -276,3 +276,12 @@ button:disabled { opacity: .55; cursor: wait; }
   .connection { padding: 0 10px; }
   .field-notes { margin-top: 28px; }
 }
+.grade-evidence { display: flex; flex-wrap: wrap; gap: .75rem 1.25rem; margin: .85rem 0 0; }
+.grade-evidence div { display: grid; gap: .15rem; }
+.grade-evidence dt { color: var(--muted); font-size: .72rem; text-transform: uppercase; letter-spacing: .08em; }
+.grade-evidence dd { margin: 0; font-weight: 650; }
+.metrics-updated { grid-column: 1 / -1; color: var(--muted); font-size: .75rem; }
+.exercise-metadata { display: grid; gap: .65rem; margin: 1.2rem 0 0; }
+.exercise-metadata div { display: grid; grid-template-columns: 8rem 1fr; gap: .75rem; }
+.exercise-metadata dt { color: var(--muted); font-size: .72rem; text-transform: uppercase; letter-spacing: .08em; }
+.exercise-metadata dd { margin: 0; }

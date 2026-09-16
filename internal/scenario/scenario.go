@@ -56,6 +56,9 @@ type Scenario struct {
 	Metadata        `yaml:",inline"`
 	Goal            string      `yaml:"goal"`
 	SuccessCriteria []string    `yaml:"success_criteria"`
+	Prerequisites   []string    `yaml:"prerequisites"`
+	RequiredTools   []string    `yaml:"required_tools"`
+	FalseHypotheses []string    `yaml:"false_hypotheses"`
 	Environment     Environment `yaml:"environment"`
 	Traffic         Traffic     `yaml:"traffic"`
 	Faults          []Fault     `yaml:"faults"`
@@ -219,6 +222,11 @@ func (s Scenario) validate() error {
 	}
 	if err := validateStrings("learning_objectives", s.LearningObjectives); err != nil {
 		return err
+	}
+	for name, values := range map[string][]string{"prerequisites": s.Prerequisites, "required_tools": s.RequiredTools, "false_hypotheses": s.FalseHypotheses} {
+		if err := validateStrings(name, values); err != nil {
+			return err
+		}
 	}
 	if s.Environment.Runtime != "docker" || s.Environment.Topology != "api-dependency" {
 		return fmt.Errorf("environment must use runtime docker and topology api-dependency")

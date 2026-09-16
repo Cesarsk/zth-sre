@@ -4,6 +4,9 @@ title: Useful Alerts for User Impact
 goal: Create an alert that tracks meaningful user impact rather than harmless CPU noise.
 success_criteria: [The alert remains quiet during the healthy baseline., The alert fires during impairment and clears after recovery.]
 difficulty: intermediate
+prerequisites: [Basic PromQL and alerting concepts]
+required_tools: [curl, Prometheus]
+false_hypotheses: [CPU alone represents user impact, Always-firing alerts are useful]
 description: >-
   CPU work creates harmless variation before higher demand causes user-visible
   latency and failures. Replace noisy alerting with actionable behavior.

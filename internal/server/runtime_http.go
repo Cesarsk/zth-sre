@@ -5,6 +5,7 @@ import (
 	"io"
 	"net/http"
 	"strings"
+	"time"
 
 	"sre-lab/internal/scenario"
 )
@@ -23,6 +24,9 @@ type scenarioView struct {
 	Diagram            scenario.Diagram `json:"diagram"`
 	Goal               string           `json:"goal"`
 	SuccessCriteria    []string         `json:"successCriteria"`
+	Prerequisites      []string         `json:"prerequisites"`
+	RequiredTools      []string         `json:"requiredTools"`
+	FalseHypotheses    []string         `json:"falseHypotheses"`
 }
 
 func handleRuntime(w http.ResponseWriter, r *http.Request, runtime *runtimeManager) {
@@ -30,7 +34,7 @@ func handleRuntime(w http.ResponseWriter, r *http.Request, runtime *runtimeManag
 	if r.Method == http.MethodGet && path == "scenarios" {
 		views := make([]scenarioView, 0, len(runtime.scenarios))
 		for _, item := range runtime.scenarios {
-			views = append(views, scenarioView{ID: item.ID, Title: item.Title, Difficulty: item.Difficulty, Description: item.Description, LearningObjectives: item.LearningObjectives, Hints: item.Hints, TrafficProfile: item.Traffic.Profile, GradingKind: item.Grading.Kind, Available: true, Topology: item.Environment.Topology, Diagram: item.Diagram, Goal: item.Goal, SuccessCriteria: item.SuccessCriteria})
+			views = append(views, scenarioView{ID: item.ID, Title: item.Title, Difficulty: item.Difficulty, Description: item.Description, LearningObjectives: item.LearningObjectives, Hints: item.Hints, TrafficProfile: item.Traffic.Profile, GradingKind: item.Grading.Kind, Available: true, Topology: item.Environment.Topology, Diagram: item.Diagram, Goal: item.Goal, SuccessCriteria: item.SuccessCriteria, Prerequisites: item.Prerequisites, RequiredTools: item.RequiredTools, FalseHypotheses: item.FalseHypotheses})
 		}
 		writeJSONResponse(w, http.StatusOK, views)
 		return
@@ -41,6 +45,11 @@ func handleRuntime(w http.ResponseWriter, r *http.Request, runtime *runtimeManag
 	}
 	if r.Method == http.MethodGet && path == "runs" {
 		writeJSONResponse(w, http.StatusOK, runtime.history.List())
+		return
+	}
+	if r.Method == http.MethodGet && path == "runs/export" {
+		w.Header().Set("Content-Disposition", "attachment; filename=sre-lab-runs.json")
+		writeJSONResponse(w, http.StatusOK, map[string]any{"exportedAt": time.Now().UTC(), "runs": runtime.history.List()})
 		return
 	}
 	if path == "run/check" && r.Method == http.MethodPost {

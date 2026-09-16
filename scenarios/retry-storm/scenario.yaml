@@ -4,6 +4,9 @@ title: Retry Storm and Cascading Failure
 goal: Stop retry amplification and restore stable dependency pressure.
 success_criteria: [Retry amplification is identified from caller and dependency evidence., Availability and latency recover without renewed downstream overload.]
 difficulty: advanced
+prerequisites: [HTTP retries and backoff fundamentals]
+required_tools: [curl, Prometheus]
+false_hypotheses: [Immediate retries are harmless, Scaling callers reduces amplification]
 description: >-
   Dependency failures trigger retries from the API and amplify load. Stabilize
   the system without stopping the required traffic.

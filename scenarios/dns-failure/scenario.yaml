@@ -4,6 +4,9 @@ title: DNS Failure
 goal: Restore service discovery and verify end-to-end reachability.
 success_criteria: [DNS failure is distinguished from dependency process health., Fresh API requests recover with the dependency reachable by name.]
 difficulty: intermediate
+prerequisites: [Basic DNS and HTTP knowledge]
+required_tools: [dig, nslookup, curl]
+false_hypotheses: [Healthy process means resolvable service, Scaling fixes name resolution]
 description: >-
   The API cannot reliably resolve its dependency. Investigate name resolution
   separately from dependency process health.

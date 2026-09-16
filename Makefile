@@ -1,7 +1,7 @@
 COMPOSE_PARALLEL_LIMIT ?= 1
 COMPOSE = COMPOSE_PARALLEL_LIMIT=$(COMPOSE_PARALLEL_LIMIT) docker compose
 
-.PHONY: bootstrap up down reset test smoke smoke-private clean logs
+.PHONY: bootstrap up down reset test smoke smoke-private verify-catalog verify-exercises verify-exercises-full clean logs
 
 bootstrap:
 	$(COMPOSE) build server toolbox api dependency
@@ -31,6 +31,15 @@ smoke: up
 
 smoke-private:
 	$(MAKE) smoke COMPOSE='docker compose -f docker-compose.yml -f runtime/docker/compose.private.yml'
+
+verify-exercises: up
+	BASE_URL=http://localhost:8080 node tests/exercises/simulate.mjs
+
+verify-exercises-full: up
+	BASE_URL=http://localhost:8080 node tests/exercises/simulate.mjs --full
+
+verify-catalog:
+	node tests/exercises/catalog-consistency.mjs
 
 logs:
 	$(COMPOSE) logs -f --tail=100

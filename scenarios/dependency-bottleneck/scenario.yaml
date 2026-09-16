@@ -4,6 +4,9 @@ title: Dependency Bottleneck
 goal: Remove the dependency bottleneck instead of adding unnecessary caller capacity.
 success_criteria: [Dependency latency is identified as the limiting layer., User-visible latency and availability recover under maintained traffic.]
 difficulty: intermediate
+prerequisites: [HTTP request-path fundamentals]
+required_tools: [curl, Prometheus]
+false_hypotheses: [API CPU must be saturated, Scaling callers removes dependency latency]
 description: >-
   API capacity appears available, but a slow dependency limits end-to-end
   reliability. Find the constrained layer before scaling the caller.
