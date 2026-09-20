@@ -8,6 +8,7 @@ COPY internal/server/ internal/server/
 COPY internal/terminal/ internal/terminal/
 COPY internal/progress/ internal/progress/
 COPY internal/history/ internal/history/
+COPY internal/progression/ internal/progression/
 COPY internal/scenario/ internal/scenario/
 RUN CGO_ENABLED=0 go build -trimpath -ldflags='-s -w' -o /toolbox ./cmd/toolbox && \
     CGO_ENABLED=0 go build -trimpath -ldflags='-s -w' -o /file-reader ./cmd/file-reader

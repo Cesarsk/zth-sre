@@ -47,6 +47,10 @@ func handleRuntime(w http.ResponseWriter, r *http.Request, runtime *runtimeManag
 		writeJSONResponse(w, http.StatusOK, runtime.history.List())
 		return
 	}
+	if r.Method == http.MethodGet && path == "profile" {
+		writeJSONResponse(w, http.StatusOK, runtime.profile.Profile())
+		return
+	}
 	if r.Method == http.MethodGet && path == "runs/export" {
 		w.Header().Set("Content-Disposition", "attachment; filename=sre-lab-runs.json")
 		writeJSONResponse(w, http.StatusOK, map[string]any{"exportedAt": time.Now().UTC(), "runs": runtime.history.List()})

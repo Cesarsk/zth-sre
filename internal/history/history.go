@@ -18,6 +18,7 @@ type Record struct {
 	Feedback     string    `json:"feedback"`
 	Availability float64   `json:"availability,omitempty"`
 	P95MS        float64   `json:"p95LatencyMS,omitempty"`
+	Score        int       `json:"score,omitempty"`
 }
 
 type Store struct {

@@ -10,12 +10,14 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"sync"
 	"time"
 
 	"sre-lab/internal/history"
+	"sre-lab/internal/progression"
 	"sre-lab/internal/scenario"
 )
 
@@ -29,25 +31,27 @@ type runtimeConfig struct {
 	DependencyURL string
 	PolicyURL     string
 	HistoryPath   string
+	ProfilePath   string
 }
 
 type runState struct {
-	ID               string    `json:"runID"`
-	Scenario         string    `json:"scenario"`
-	State            string    `json:"state"`
-	Phase            string    `json:"phase"`
-	StartedAt        time.Time `json:"startedAt"`
-	RevealedHints    []int     `json:"revealedHints"`
-	AlertExpression  string    `json:"alertExpression,omitempty"`
-	AlertFired       bool      `json:"alertFired"`
-	AlertCleared     bool      `json:"alertCleared"`
-	AlertBaseline    bool      `json:"alertBaseline"`
-	IncidentSeen     bool      `json:"incidentSeen"`
-	RecoverySeen     bool      `json:"recoverySeen"`
-	Interventions    []string  `json:"interventions,omitempty"`
-	FileEvidenceSeen bool      `json:"fileEvidenceSeen"`
-	Diagnosis        string    `json:"diagnosis,omitempty"`
-	EvidenceNote     string    `json:"evidenceNote,omitempty"`
+	ID                    string    `json:"runID"`
+	Scenario              string    `json:"scenario"`
+	State                 string    `json:"state"`
+	Phase                 string    `json:"phase"`
+	StartedAt             time.Time `json:"startedAt"`
+	RevealedHints         []int     `json:"revealedHints"`
+	AlertExpression       string    `json:"alertExpression,omitempty"`
+	AlertFired            bool      `json:"alertFired"`
+	AlertCleared          bool      `json:"alertCleared"`
+	AlertBaseline         bool      `json:"alertBaseline"`
+	AlertBaselineObserved bool      `json:"alertBaselineObserved"`
+	IncidentSeen          bool      `json:"incidentSeen"`
+	RecoverySeen          bool      `json:"recoverySeen"`
+	Interventions         []string  `json:"interventions,omitempty"`
+	FileEvidenceSeen      bool      `json:"fileEvidenceSeen"`
+	Diagnosis             string    `json:"diagnosis,omitempty"`
+	EvidenceNote          string    `json:"evidenceNote,omitempty"`
 }
 
 type runtimeManager struct {
@@ -58,6 +62,7 @@ type runtimeManager struct {
 	client    *http.Client
 	active    *runState
 	history   *history.Store
+	profile   *progression.Store
 }
 
 func newRuntime(c runtimeConfig) (*runtimeManager, error) {
@@ -76,7 +81,14 @@ func newRuntime(c runtimeConfig) (*runtimeManager, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &runtimeManager{scenarios: list, byID: byID, config: c, client: &http.Client{Timeout: 5 * time.Second}, history: store}, nil
+	if c.ProfilePath == "" {
+		c.ProfilePath = filepath.Join(filepath.Dir(c.HistoryPath), "learner.json")
+	}
+	profile, err := progression.Open(c.ProfilePath)
+	if err != nil {
+		return nil, err
+	}
+	return &runtimeManager{scenarios: list, byID: byID, config: c, client: &http.Client{Timeout: 5 * time.Second}, history: store, profile: profile}, nil
 }
 
 func (m *runtimeManager) list() []scenario.Scenario {
@@ -219,6 +231,9 @@ func (m *runtimeManager) setPhase(ctx context.Context, phase string) error {
 	}
 	if phase == "recovery" {
 		m.active.RecoverySeen = true
+		if m.active.Scenario == "useful-alerts" || m.active.Scenario == "slo-burn-rate" {
+			m.active.Interventions = append(m.active.Interventions, "alert-recovery")
+		}
 		m.scheduleAlertEvaluation(m.active.ID, "recovery")
 	}
 	return nil
@@ -279,6 +294,7 @@ func (m *runtimeManager) scheduleAlertEvaluation(runID, phase string) {
 				m.active.AlertCleared = !fired
 			} else {
 				m.active.AlertBaseline = fired
+				m.active.AlertBaselineObserved = true
 			}
 			m.mu.Unlock()
 		}
@@ -337,6 +353,7 @@ func (m *runtimeManager) check(ctx context.Context) map[string]any {
 	result["interventions"] = append([]string(nil), m.active.Interventions...)
 	result["recoverySeen"] = m.active.RecoverySeen
 	result["alertBaseline"] = m.active.AlertBaseline
+	result["alertBaselineObserved"] = m.active.AlertBaselineObserved
 	result["alertFired"] = m.active.AlertFired
 	result["alertCleared"] = m.active.AlertCleared
 	switch m.active.Scenario {
@@ -344,10 +361,10 @@ func (m *runtimeManager) check(ctx context.Context) map[string]any {
 		result["passed"] = hasIntervention(m.active, "horizontal-capacity") && m.active.RecoverySeen && availability >= item.Objectives.Availability && p95 <= float64(item.Objectives.P95LatencyMS) && count >= float64(item.Grading.MinimumRequests)
 		result["feedback"] = "Increase API capacity, mark recovery, and sustain the declared availability, latency, and request window."
 	case "useful-alerts":
-		result["passed"] = m.active.AlertExpression != "" && !m.active.AlertBaseline && m.active.IncidentSeen && m.active.RecoverySeen && m.active.AlertFired && m.active.AlertCleared
+		result["passed"] = m.active.AlertExpression != "" && m.active.AlertBaselineObserved && !m.active.AlertBaseline && m.active.IncidentSeen && m.active.RecoverySeen && m.active.AlertFired && m.active.AlertCleared
 		result["feedback"] = "A useful alert must stay quiet in baseline, evaluate during user impact, and clear after recovery."
 	case "slo-burn-rate":
-		result["passed"] = m.active.AlertExpression != "" && !m.active.AlertBaseline && m.active.IncidentSeen && m.active.RecoverySeen && m.active.AlertFired && m.active.AlertCleared
+		result["passed"] = m.active.AlertExpression != "" && m.active.AlertBaselineObserved && !m.active.AlertBaseline && m.active.IncidentSeen && m.active.RecoverySeen && m.active.AlertFired && m.active.AlertCleared
 		result["feedback"] = "Define the valid-request SLI, observe rapid burn, and verify the alert clears after recovery."
 	case "vertical-horizontal":
 		result["passed"] = hasIntervention(m.active, "horizontal-capacity") && m.active.RecoverySeen && availability >= item.Objectives.Availability && p95 <= float64(item.Objectives.P95LatencyMS) && count >= float64(item.Grading.MinimumRequests)
@@ -386,9 +403,82 @@ func (m *runtimeManager) check(ctx context.Context) map[string]any {
 		result["passed"] = false
 		result["feedback"] = "Record an evidence-backed diagnosis before checking the achieved outcome."
 	}
+	score, breakdown := m.score(result, item)
+	if !passed || item.ID == "file-forensics" {
+		score = 0
+	}
+	result["score"] = score
+	result["scoreBreakdown"] = breakdown
 	feedback, _ := result["feedback"].(string)
-	_ = m.history.Add(history.Record{RunID: m.active.ID, Scenario: m.active.Scenario, StartedAt: m.active.StartedAt, CheckedAt: time.Now().UTC(), Passed: passed, Feedback: feedback, Availability: availability, P95MS: p95})
+	profileSaved := false
+	if passed && item.ID != "file-forensics" {
+		profile, xp, err := m.profile.Award(m.active.ID, m.active.Scenario, score, m.badges(item))
+		if err != nil {
+			result["progressionError"] = "Mission passed, but learner progress could not be saved."
+		} else {
+			result["xpAwarded"] = xp
+			result["profile"] = profile
+			profileSaved = true
+		}
+	} else if passed {
+		result["progressionNote"] = "This guided self-check does not award XP because its evidence is learner-attested."
+	}
+	historyScore := 0
+	if profileSaved {
+		historyScore = score
+	}
+	if err := m.history.Add(history.Record{RunID: m.active.ID, Scenario: m.active.Scenario, StartedAt: m.active.StartedAt, CheckedAt: time.Now().UTC(), Passed: passed, Feedback: feedback, Availability: availability, P95MS: p95, Score: historyScore}); err != nil {
+		result["historyError"] = "Mission check completed, but local run history could not be saved."
+	}
 	return result
+}
+
+func (m *runtimeManager) score(result map[string]any, item scenario.Scenario) (int, map[string]int) {
+	diagnosis := 0
+	if m.activeDiagnosisCorrect() {
+		diagnosis = 25
+	}
+	mitigation := 0
+	if m.active.FileEvidenceSeen || len(m.active.Interventions) > 0 || m.active.RecoverySeen {
+		mitigation = 25
+	}
+	verification := 0
+	if item.ID == "file-forensics" && m.active.FileEvidenceSeen {
+		verification = 25
+	} else if item.ID == "useful-alerts" || item.ID == "slo-burn-rate" {
+		if m.active.AlertBaselineObserved && !m.active.AlertBaseline && m.active.AlertFired && m.active.AlertCleared {
+			verification = 25
+		}
+	} else if availability, ok := result["availability"].(float64); ok {
+		p95, _ := result["p95_latency_ms"].(float64)
+		count, _ := result["requests"].(float64)
+		if availability >= item.Objectives.Availability && p95 <= float64(item.Objectives.P95LatencyMS) && count >= float64(item.Grading.MinimumRequests) {
+			verification = 25
+		}
+	}
+	precision := 25 - 5*len(m.active.RevealedHints)
+	if precision < 0 {
+		precision = 0
+	}
+	breakdown := map[string]int{"evidence": diagnosis, "mitigation": mitigation, "verification": verification, "precision": precision}
+	return diagnosis + mitigation + verification + precision, breakdown
+}
+
+func (m *runtimeManager) badges(item scenario.Scenario) []progression.Badge {
+	badges := []progression.Badge{}
+	if m.activeDiagnosisCorrect() {
+		badges = append(badges, progression.Badge{ID: "evidence-first", Title: "Evidence First", Description: "Completed a mission with an evidence-backed diagnosis before mitigation."})
+	}
+	if len(m.active.RevealedHints) == 0 && len(m.active.Interventions) == 1 {
+		badges = append(badges, progression.Badge{ID: "narrow-fix", Title: "Narrow Fix", Description: "Restored service with one focused intervention and no hints."})
+	}
+	if m.active.RecoverySeen {
+		badges = append(badges, progression.Badge{ID: "clean-recovery", Title: "Clean Recovery", Description: "Verified recovery while the lab continued to observe the system."})
+	}
+	if item.ID == "useful-alerts" || item.ID == "slo-burn-rate" {
+		badges = append(badges, progression.Badge{ID: "signal-builder", Title: "Signal Builder", Description: "Built an alert that was quiet at baseline, fired during impact, and cleared after recovery."})
+	}
+	return badges
 }
 
 func (m *runtimeManager) markFileEvidence() error {

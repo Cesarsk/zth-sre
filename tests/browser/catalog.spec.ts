@@ -3,6 +3,8 @@ import { expect, test } from '@playwright/test';
 test('index supports discovery, clear availability and a guided workspace', async ({ page }) => {
   await page.goto('/');
   await expect(page.getByRole('heading', { name: 'Exercise index', exact: true })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Your on-call progression', exact: true })).toBeVisible();
+  await expect(page.getByText('Mission XP', { exact: true })).toBeVisible();
   await expect(page.locator('.exercise-card')).toHaveCount(14);
   await expect(page.getByText('Available walkthrough', { exact: true })).toHaveCount(1);
   await expect(page.getByText('Available exercise', { exact: true })).toHaveCount(13);
@@ -51,6 +53,10 @@ test('incident exercise briefs can start a deterministic lab', async ({ page }) 
   await expect(page.getByText('observed outcome', { exact: false }).first()).toBeVisible();
   await page.getByRole('button', { name: 'Start exercise' }).click();
   await expect(page.getByRole('button', { name: 'Reset exercise' })).toBeVisible({ timeout: 30000 });
+  await expect(page.getByLabel('Active incident status')).toBeVisible();
+  await expect(page.getByLabel('Incident timeline')).toBeVisible();
+  await expect(page.getByText('Phase', { exact: true })).toBeVisible();
+  await expect(page.getByText('Evidence', { exact: true }).last()).toBeVisible();
   await expect(page.getByRole('button', { name: 'Connect terminal' })).toBeVisible();
   await page.getByRole('button', { name: 'Reset exercise' }).click();
   await expect(page.getByRole('button', { name: 'Start exercise' })).toBeVisible({ timeout: 30000 });

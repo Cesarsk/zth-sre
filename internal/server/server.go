@@ -56,6 +56,7 @@ type Config struct {
 	DependencyURL        string
 	DependencyControlURL string
 	HistoryPath          string
+	ProfilePath          string
 	ProgressPath         string
 	ScenarioRoot         string
 	TrafficURL           string
@@ -66,7 +67,7 @@ type Config struct {
 }
 
 func ConfigFromEnv() Config {
-	return Config{Origins: OriginsFromEnv(), StaticDir: env("STATIC_DIR", "/app/frontend"), ToolboxURL: env("TOOLBOX_URL", "http://toolbox:8080"), PrometheusURL: env("PROMETHEUS_URL", "http://prometheus:9090"), APIURL: env("API_URL", "http://api-lb:8080"), DependencyURL: env("DEPENDENCY_URL", "http://dependency:8080"), DependencyControlURL: env("DEPENDENCY_CONTROL_URL", "http://dependency:8080"), PolicyControlURL: env("POLICY_CONTROL_URL", "http://policy:8080"), ProgressPath: env("PROGRESS_PATH", "/data/progress.json"), HistoryPath: env("HISTORY_PATH", "/data/runs.json"), ScenarioRoot: env("SCENARIO_ROOT", "/app"), TrafficURL: env("TRAFFIC_URL", "http://traffic:8080"), LBURL: env("LB_URL", "http://api-lb:8080"), API1URL: env("API1_URL", "http://api-1:8080"), API2URL: env("API2_URL", "http://api-2:8080")}
+	return Config{Origins: OriginsFromEnv(), StaticDir: env("STATIC_DIR", "/app/frontend"), ToolboxURL: env("TOOLBOX_URL", "http://toolbox:8080"), PrometheusURL: env("PROMETHEUS_URL", "http://prometheus:9090"), APIURL: env("API_URL", "http://api-lb:8080"), DependencyURL: env("DEPENDENCY_URL", "http://dependency:8080"), DependencyControlURL: env("DEPENDENCY_CONTROL_URL", "http://dependency:8080"), PolicyControlURL: env("POLICY_CONTROL_URL", "http://policy:8080"), ProgressPath: env("PROGRESS_PATH", "/data/progress.json"), HistoryPath: env("HISTORY_PATH", "/data/runs.json"), ProfilePath: env("PROFILE_PATH", "/data/learner.json"), ScenarioRoot: env("SCENARIO_ROOT", "/app"), TrafficURL: env("TRAFFIC_URL", "http://traffic:8080"), LBURL: env("LB_URL", "http://api-lb:8080"), API1URL: env("API1_URL", "http://api-1:8080"), API2URL: env("API2_URL", "http://api-2:8080")}
 }
 
 func upstream(raw string) (*url.URL, error) {
@@ -92,6 +93,9 @@ func New(c Config) (*Handler, error) {
 	if c.HistoryPath == "" {
 		c.HistoryPath = filepath.Join(c.StaticDir, ".runs.json")
 	}
+	if c.ProfilePath == "" {
+		c.ProfilePath = filepath.Join(c.StaticDir, ".learner.json")
+	}
 	origins, hosts, err := ParseOrigins(c.Origins)
 	if err != nil {
 		return nil, err
@@ -102,7 +106,7 @@ func New(c Config) (*Handler, error) {
 	}
 	var runtime *runtimeManager
 	if _, statErr := os.Stat(filepath.Join(c.ScenarioRoot, "scenarios")); statErr == nil {
-		runtime, err = newRuntime(runtimeConfig{Root: c.ScenarioRoot, TrafficURL: c.TrafficURL, PromURL: c.PrometheusURL, LBURL: c.LBURL, API1URL: c.API1URL, API2URL: c.API2URL, DependencyURL: c.DependencyControlURL, PolicyURL: c.PolicyControlURL, HistoryPath: c.HistoryPath})
+		runtime, err = newRuntime(runtimeConfig{Root: c.ScenarioRoot, TrafficURL: c.TrafficURL, PromURL: c.PrometheusURL, LBURL: c.LBURL, API1URL: c.API1URL, API2URL: c.API2URL, DependencyURL: c.DependencyControlURL, PolicyURL: c.PolicyControlURL, HistoryPath: c.HistoryPath, ProfilePath: c.ProfilePath})
 		if err != nil {
 			return nil, err
 		}
@@ -244,7 +248,7 @@ func New(c Config) (*Handler, error) {
 			w.Header().Set("Cache-Control", "no-store")
 			json.NewEncoder(w).Encode(result)
 		default:
-			if runtime != nil && (strings.HasPrefix(r.URL.Path, "/api/scenarios") || strings.HasPrefix(r.URL.Path, "/api/run") || r.URL.Path == "/api/runs") {
+			if runtime != nil && (strings.HasPrefix(r.URL.Path, "/api/scenarios") || strings.HasPrefix(r.URL.Path, "/api/run") || r.URL.Path == "/api/runs" || r.URL.Path == "/api/profile") {
 				if r.Method != http.MethodGet && (len(r.Header.Values("Origin")) != 1 || !origins[r.Header.Get("Origin")]) {
 					http.Error(w, "origin forbidden", http.StatusForbidden)
 					return
